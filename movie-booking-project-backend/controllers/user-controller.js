@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import Bookings from "../models/Bookings.js";
+
 export const getAllUsers = async (req, res, next) => {
   let users;
   try {
@@ -26,19 +27,46 @@ export const singup = async (req, res, next) => {
   ) {
     return res.status(422).json({ message: "Invalid Inputs" });
   }
+
+  // Verifică dacă există deja un utilizator cu acest email
+  let existingUser;
+  try {
+    existingUser = await User.findOne({ email });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Eroare la verificarea emailului" });
+  }
+
+  if (existingUser) {
+    return res.status(400).json({ 
+      message: "Acest email este deja înregistrat. Te rugăm să folosești alt email sau să te autentifici." 
+    });
+  }
+
   const hashedPassword = bcrypt.hashSync(password);
   let user;
   try {
     user = new User({ name, email, password: hashedPassword });
     user = await user.save();
   } catch (err) {
-    return console.log(err);
+    console.log(err);
+    // Verifică dacă este o eroare de cheie duplicată (cazul în care prima verificare nu a prins duplicatul)
+    if (err.code === 11000 && err.keyPattern && err.keyPattern.email) {
+      return res.status(400).json({ 
+        message: "Acest email este deja înregistrat. Te rugăm să folosești alt email sau să te autentifici.",
+        error: { code: 11000 }
+      });
+    }
+    return res.status(500).json({ message: "Eroare la înregistrare. Te rugăm să încerci din nou." });
   }
+  
   if (!user) {
     return res.status(500).json({ message: "Unexpected Error Occured" });
   }
+  
   return res.status(201).json({ id: user._id });
 };
+
 export const updateUser = async (req, res, next) => {
   const id = req.params.id;
   const { name, email, password } = req.body;
@@ -53,7 +81,7 @@ export const updateUser = async (req, res, next) => {
     return res.status(422).json({ message: "Invalid Inputs" });
   }
   const hashedPassword = bcrypt.hashSync(password);
-
+  
   let user;
   try {
     user = await User.findByIdAndUpdate(id, {
@@ -62,11 +90,21 @@ export const updateUser = async (req, res, next) => {
       password: hashedPassword,
     });
   } catch (errr) {
-    return console.log(errr);
+    console.log(errr);
+    // Verifică dacă este o eroare de cheie duplicată
+    if (errr.code === 11000 && errr.keyPattern && errr.keyPattern.email) {
+      return res.status(400).json({ 
+        message: "Acest email este deja folosit de alt utilizator.",
+        error: { code: 11000 }
+      });
+    }
+    return res.status(500).json({ message: "Eroare la actualizare. Te rugăm să încerci din nou." });
   }
+  
   if (!user) {
     return res.status(500).json({ message: "Something went wrong" });
   }
+  
   res.status(200).json({ message: "Updated Sucessfully" });
 };
 
@@ -95,23 +133,24 @@ export const login = async (req, res, next) => {
   } catch (err) {
     return console.log(err);
   }
-
+  
   if (!existingUser) {
     return res
       .status(404)
-      .json({ message: "Unable to find user from this ID" });
+      .json({ message: "Emailul sau parola sunt incorecte" });
   }
-
+  
   const isPasswordCorrect = bcrypt.compareSync(password, existingUser.password);
-
+  
   if (!isPasswordCorrect) {
-    return res.status(400).json({ message: "Incorrect Password" });
+    return res.status(400).json({ message: "Parola este incorecta" });
   }
-
+  
   return res
     .status(200)
     .json({ message: "Login Successfull", id: existingUser._id });
 };
+
 export const getBookingsOfUser = async (req, res, next) => {
   const id = req.params.id;
   let bookings;
@@ -127,6 +166,7 @@ export const getBookingsOfUser = async (req, res, next) => {
   }
   return res.status(200).json({ bookings });
 };
+
 export const getUserById = async (req, res, next) => {
   const id = req.params.id;
   let user;

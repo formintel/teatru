@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import Bookings from "../models/Bookings.js";
-import Movie from "../models/movie.js";
+import Movie from "../models/Movie.js";
 import User from "../models/User.js";
 
 export const newBooking = async (req, res, next) => {
@@ -29,16 +29,18 @@ export const newBooking = async (req, res, next) => {
       seatNumber,
       user,
     });
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    
+    await booking.save();
+    
     existingUser.bookings.push(booking);
+    await existingUser.save();
+    
     existingMovie.bookings.push(booking);
-    await existingUser.save({ session });
-    await existingMovie.save({ session });
-    await booking.save({ session });
-    session.commitTransaction();
+    await existingMovie.save();
+    
   } catch (err) {
-    return console.log(err);
+    console.log("Eroare la crearea rezervării:", err);
+    return res.status(500).json({ message: "Eroare la crearea rezervării" });
   }
 
   if (!booking) {
@@ -68,16 +70,18 @@ export const deleteBooking = async (req, res, next) => {
   try {
     booking = await Bookings.findByIdAndRemove(id).populate("user movie");
     console.log(booking);
-    const session = await mongoose.startSession();
-    session.startTransaction();
-    await booking.user.bookings.pull(booking);
-    await booking.movie.bookings.pull(booking);
-    await booking.movie.save({ session });
-    await booking.user.save({ session });
-    session.commitTransaction();
+    
+    if (booking && booking.user && booking.movie) {
+      await booking.user.bookings.pull(booking);
+      await booking.movie.bookings.pull(booking);
+      await booking.movie.save();
+      await booking.user.save();
+    }
   } catch (err) {
-    return console.log(err);
+    console.log("Eroare la ștergerea rezervării:", err);
+    return res.status(500).json({ message: "Eroare la ștergerea rezervării" });
   }
+  
   if (!booking) {
     return res.status(500).json({ message: "Unable to Delete" });
   }

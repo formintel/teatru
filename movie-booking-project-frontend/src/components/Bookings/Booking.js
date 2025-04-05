@@ -24,9 +24,20 @@ const Booking = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log(inputs);
-    newBooking({ ...inputs, movie: movie._id })
-      .then((res) => console.log(res))
-      .catch((err) => console.log(err));
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      alert("Trebuie să fii autentificat pentru a face o rezervare!");
+      return;
+    }
+    newBooking({ ...inputs, movie: movie._id, user: userId })
+      .then((res) => {
+        console.log(res);
+        alert("Rezervare creată cu succes!");
+      })
+      .catch((err) => {
+        console.log(err);
+        alert("Eroare la crearea rezervării. Te rugăm să încerci din nou.");
+      });
   };
   return (
     <div>

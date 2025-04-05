@@ -11,7 +11,7 @@ import React, { useState } from "react";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { Link } from "react-router-dom";
 const labelStyle = { mt: 1, mb: 1 };
-const AuthForm = ({ onSubmit, isAdmin }) => {
+const AuthForm = ({ onSubmit, isAdmin, error, success }) => {
   const [inputs, setInputs] = useState({
     name: "",
     email: "",
@@ -36,8 +36,46 @@ const AuthForm = ({ onSubmit, isAdmin }) => {
         </IconButton>
       </Box>
       <Typography variant="h4" textAlign={"center"}>
-        {isSignup ? "Signup" : "Login"}
+        {isSignup ? "Înregistrare" : "Autentificare"}
       </Typography>
+      
+      <Typography variant="body1" textAlign={"center"} color="text.secondary" sx={{ mt: 2, mb: 3 }}>
+        {isSignup 
+          ? "Creează un cont pentru a putea rezerva bilete la spectacole" 
+          : "Autentifică-te pentru a putea rezerva bilete la spectacole"}
+      </Typography>
+      {error && (
+        <Typography 
+          variant="body2" 
+          color="error" 
+          textAlign="center" 
+          sx={{ 
+            bgcolor: 'error.light', 
+            color: 'white', 
+            p: 1, 
+            borderRadius: 1,
+            mb: 2 
+          }}
+        >
+          {error}
+        </Typography>
+      )}
+      {success && (
+        <Typography 
+          variant="body2" 
+          color="success" 
+          textAlign="center" 
+          sx={{ 
+            bgcolor: 'success.light', 
+            color: 'white', 
+            p: 1, 
+            borderRadius: 1,
+            mb: 2 
+          }}
+        >
+          {success}
+        </Typography>
+      )}
       <form onSubmit={handleSubmit}>
         <Box
           padding={6}
@@ -86,7 +124,7 @@ const AuthForm = ({ onSubmit, isAdmin }) => {
             fullWidth
             variant="contained"
           >
-            {isSignup ? "Signup" : "Login"}
+            {isSignup ? "Înregistrare" : "Autentificare"}
           </Button>
           {!isAdmin && (
             <Button
@@ -94,7 +132,7 @@ const AuthForm = ({ onSubmit, isAdmin }) => {
               sx={{ mt: 2, borderRadius: 10 }}
               fullWidth
             >
-              Switch To {isSignup ? "Login" : "Signup"}
+              {isSignup ? "Ai deja cont? Autentifică-te" : "Nu ai cont? Înregistrează-te"}
             </Button>
           )}
         </Box>

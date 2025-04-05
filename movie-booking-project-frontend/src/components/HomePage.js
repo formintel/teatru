@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getAllMovies } from "../api-helpers/api-helpers";
+import { getAllSpectacole } from "../api-helpers/api-helpers";
 import dramaLogo from "../assets/images/drama-logo.jpg";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
+import { useSelector } from "react-redux";
 
 const HomePage = () => {
-  const [movies, setMovies] = useState([]);
+  const [spectacole, setSpectacole] = useState([]);
+  const isUserLoggedIn = useSelector((state) => state.user.isLoggedIn);
 
   useEffect(() => {
-    getAllMovies()
+    getAllSpectacole()
       .then((data) => {
         console.log("Datele primite:", data.movies); // Pentru debugging
-        setMovies(data.movies);
+        setSpectacole(data.movies);
       })
       .catch((err) => console.log(err));
   }, []);
@@ -49,35 +51,42 @@ const HomePage = () => {
       <div className="container mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center font-serif">Spectacole în Curs</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {movies.slice(0, 6).map((movie) => {
-            const formattedDate = format(new Date(movie.releaseDate), "d MMMM yyyy", { locale: ro });
-            return (
-              <div 
-                key={movie._id}
-                className="bg-white rounded-lg shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300"
-              >
-                <img 
-                  src={movie.posterUrl} 
-                  alt={movie.title}
-                  className="w-full h-64 object-cover"
-                />
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2 font-serif">{movie.title}</h3>
-                  <p className="text-gray-600 mb-4">{movie.description}</p>
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-red-900 font-semibold">{formattedDate}</span>
-                    <span className="text-green-600 font-semibold">{movie.pret} RON</span>
-                  </div>
-                  <Link 
-                    to={`/booking/${movie._id}`}
-                    className="inline-block bg-red-900 text-white px-4 py-2 rounded-lg hover:bg-red-800 transition-colors duration-300 w-full text-center"
-                  >
-                    Rezervă Bilet
-                  </Link>
+          {spectacole.map((spectacol) => (
+            <div 
+              key={spectacol._id} 
+              className="bg-white rounded-lg shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300 cursor-pointer group relative"
+              onClick={() => {
+                if (isUserLoggedIn) {
+                  window.location.href = `/booking/${spectacol._id}`;
+                } else {
+                  window.location.href = '/auth';
+                }
+              }}
+            >
+              <img 
+                src={spectacol.posterUrl} 
+                alt={spectacol.title}
+                className="w-full h-64 object-cover"
+              />
+              <div className="p-6">
+                <h3 className="text-xl font-bold mb-2">{spectacol.title}</h3>
+                <p className="text-gray-600 mb-4">{spectacol.description}</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-green-600 font-semibold">{spectacol.pret} RON</span>
+                  <span className="bg-red-900 text-white px-4 py-2 rounded hover:bg-red-800 transition-colors duration-300">
+                    Rezervă
+                  </span>
                 </div>
               </div>
-            );
-          })}
+              {!isUserLoggedIn && (
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center">
+                  <div className="bg-gray-800 text-white text-sm rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    Ups... E nevoie de autentificare pentru rezervarea biletului
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
