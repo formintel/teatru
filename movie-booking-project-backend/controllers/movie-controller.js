@@ -21,7 +21,7 @@ export const addMovie = async (req, res, next) => {
   });
 
   //create new movie
-  const { title, description, releaseDate, posterUrl, featured, actors } =
+  const { title, description, releaseDate, posterUrl, featured, actors, showTimes } =
     req.body;
   if (
     !title &&
@@ -44,6 +44,7 @@ export const addMovie = async (req, res, next) => {
       admin: adminId,
       posterUrl,
       title,
+      showTimes, 
     });
     const session = await mongoose.startSession();
     const adminUser = await Admin.findById(adminId);

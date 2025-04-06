@@ -19,6 +19,11 @@ const bookingSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  showTimeId: {
+    type: mongoose.Types.ObjectId,
+    ref: "ShowTime",  // If you have a separate ShowTime model
+    required: true
+  },
 });
 
 export default mongoose.model("Booking", bookingSchema);

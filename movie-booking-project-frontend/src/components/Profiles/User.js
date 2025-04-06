@@ -26,8 +26,13 @@ const User = () => {
   console.log(bookings);
   const handleDelete = (id) => {
     deleteBooking(id)
-      .then(() => navigate("/"))
-      .catch((err) => console.log(err));
+    .then(() => {
+      // Elimină rezervarea din starea locală pentru a actualiza lista
+      setBookings((prevBookings) =>
+        prevBookings.filter((booking) => booking._id !== id)
+      );
+    })
+    .catch((err) => console.log(err));
   };
   return (
     <Box width="100%" display={"flex"}>

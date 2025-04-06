@@ -14,6 +14,14 @@ const movieSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
+  showTimes: [
+    {
+      _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+      date: { type: Date, required: true },
+      availableSeats: { type: Number, required: true }
+    }
+  ],
+  
   posterUrl: {
     type: String,
     required: true,

@@ -130,6 +130,7 @@ export const newBooking = async (data) => {
       seatNumber: data.seatNumber,
       date: data.date,
       user: localStorage.getItem("userId"),
+      showTimeId: data.showTimeId,
     })
     .catch((err) => console.log(err));
 
@@ -138,6 +139,17 @@ export const newBooking = async (data) => {
   }
   const resData = await res.data;
   return resData;
+};
+
+export const getOccupiedSeats = async (movieId, showTimeId) => {
+  try {
+    // Asigură-te că URL-ul corespunde cu cel din server
+    const res = await axios.get(`/booking/occupied-seats?movieId=${movieId}&showTimeId=${showTimeId}`);
+    return res.data;
+  } catch (err) {
+    console.error("Error fetching occupied seats:", err);
+    throw err;
+  }
 };
 
 export const getUserBooking = async () => {
@@ -185,8 +197,15 @@ export const addMovie = async (data) => {
         description: data.description,
         releaseDate: data.releaseDate,
         posterUrl: data.posterUrl,
-        fetaured: data.fetaured,
+        featured: data.featured,
         actors: data.actors,
+        sala: data.sala,
+        numarLocuri: data.numarLocuri,
+        pret: data.pret,
+        regizor: data.regizor,
+        durata: data.durata,
+        gen: data.gen,
+        showTimes: data.showTimes,
         admin: localStorage.getItem("adminId"),
       },
       {

@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { getAllMovies } from "../../api-helpers/api-helpers";
 import { Link, useSearchParams } from "react-router-dom";
@@ -31,7 +31,9 @@ const Movies = () => {
 
   const filteredMovies = movies?.filter((movie) =>
     movie.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    movie.description.toLowerCase().includes(searchQuery.toLowerCase())
+    movie.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    movie.gen.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    movie.regizor.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -64,7 +66,13 @@ const Movies = () => {
                 />
                 <div className="p-6">
                   <h3 className="text-xl font-bold mb-2">{movie.title}</h3>
-                  <p className="text-gray-600 mb-4">{movie.description}</p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">{movie.gen}</span>
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{movie.durata} min</span>
+                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Sala {movie.sala}</span>
+                  </div>
+                  <p className="text-gray-500 text-sm mb-2">Regia: {movie.regizor}</p>
+                  <p className="text-gray-600 mb-4 line-clamp-3">{movie.description}</p>
                   <div className="flex justify-between items-center">
                     <span className="text-green-600 font-semibold">
                       {movie.pret} RON
