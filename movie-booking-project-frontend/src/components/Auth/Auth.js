@@ -1,8 +1,9 @@
+// components/Auth.js
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { sendUserAuthRequest } from "../../api-helpers/api-helpers";
-import { userActions } from "../../store";
+import { authActions } from "../../store";
 import AuthForm from "./AuthForm";
 
 const Auth = () => {
@@ -14,14 +15,18 @@ const Auth = () => {
   const onResReceived = (data) => {
     console.log("Răspuns primit:", data);
     if (data.message === "Login Successfull") {
-      dispatch(userActions.login());
+      dispatch(authActions.login({
+        userId: data.id,
+        role: data.role, // Setează rolul
+        token: data.token,
+      }));
       localStorage.setItem("userId", data.id);
+      localStorage.setItem("role", data.role); // Salvează rolul
+      localStorage.setItem("token", data.token);
       navigate("/");
     } else if (data.success) {
-      // Dacă este înregistrare reușită, afișăm mesajul de succes
       setSuccess(data.message);
       setError("");
-      // Resetăm formularul după 2 secunde
       setTimeout(() => {
         setSuccess("");
       }, 2000);
@@ -32,8 +37,8 @@ const Auth = () => {
 
   const getData = async (data) => {
     console.log("Încercare autentificare:", data);
-    setError(""); // Resetăm eroarea la fiecare încercare
-    setSuccess(""); // Resetăm mesajul de succes la fiecare încercare
+    setError("");
+    setSuccess("");
     try {
       const response = await sendUserAuthRequest(data.inputs, data.signup);
       onResReceived(response);

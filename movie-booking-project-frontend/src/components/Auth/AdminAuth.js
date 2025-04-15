@@ -1,3 +1,4 @@
+// components/AdminAuth.js
 import {
   Box,
   Button,
@@ -10,40 +11,50 @@ import {
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { adminLogin, sendAuthRequest } from "../../helpers/api-helpers";
+import { sendAdminAuthRequest } from "../../api-helpers/api-helpers";
 import { useDispatch } from "react-redux";
-import { adminActions } from "../../store/admin-slice";
+import { authActions } from "../../store";
+
 const labelSx = { marginRight: "auto", mt: 1, mb: 1 };
+
 const AdminAuth = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
   const [inputs, setInputs] = useState({ email: "", password: "" });
+
   const onClose = () => {
     setOpen(false);
     navigate("/");
   };
+
   const handleChange = (e) => {
     setInputs((prevState) => ({
       ...prevState,
       [e.target.name]: e.target.value,
     }));
   };
-  const onRequestSent = (val) => {
-    localStorage.removeItem("userId");
-    localStorage.setItem("adminId", val.id);
-    localStorage.setItem("token", val.token);
-    dispatch(adminActions.login());
+
+  const onRequestSent = (data) => {
+    dispatch(authActions.login({
+      userId: data.id,
+      role: data.role,
+      token: data.token,
+    }));
+    localStorage.setItem("userId", data.id);
+    localStorage.setItem("role", data.role);
+    localStorage.setItem("token", data.token);
     setOpen(false);
     navigate("/");
   };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log(inputs);
-    adminLogin(inputs)
+    sendAdminAuthRequest(inputs)
       .then(onRequestSent)
       .catch((err) => console.log(err));
-    setInputs({ name: "", email: "", password: "" });
+    setInputs({ email: "", password: "" });
   };
 
   return (
@@ -54,7 +65,7 @@ const AdminAuth = () => {
         </IconButton>
       </Box>
       <Typography variant="h4" textAlign={"center"}>
-        {"Login"}
+        {"Login Admin"}
       </Typography>
       <form onSubmit={handleSubmit}>
         <Box

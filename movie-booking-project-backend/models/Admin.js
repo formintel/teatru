@@ -17,6 +17,17 @@ const adminSchema = new mongoose.Schema({
       ref: "Movie",
     },
   ],
+  bookings: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "Booking",
+    },
+  ],
+  statistics: {
+    totalBookings: { type: Number, default: 0 },
+    totalRevenue: { type: Number, default: 0 },
+    totalMovies: { type: Number, default: 0 },
+  }
 });
 
 export default mongoose.model("Admin", adminSchema);

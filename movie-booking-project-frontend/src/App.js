@@ -1,3 +1,4 @@
+// src/App.js
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Route, Routes } from "react-router-dom";
@@ -10,21 +11,22 @@ import Movies from "./components/Movies/Movies";
 import AddMovie from "./components/Movies/AddMovie";
 import AdminProfile from "./profile/AdminProfile";
 import UserProfile from "./profile/UserProfile";
-import { adminActions, userActions } from "./store";
+import { authActions } from "./store";
+import AdminMovieDetails from "./components/Movies/AdminMovieDetails";
 
 function App() {
   const dispatch = useDispatch();
-  const isAdminLoggedIn = useSelector((state) => state.admin.isLoggedIn);
-  const isUserLoggedIn = useSelector((state) => state.user.isLoggedIn);
-  console.log("isAdminLoggedIn", isAdminLoggedIn);
-  console.log("isUserLoggedIn", isUserLoggedIn);
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  const userRole = useSelector((state) => state.auth.role);
+
   useEffect(() => {
-    if (localStorage.getItem("userId")) {
-      dispatch(userActions.login());
-    } else if (localStorage.getItem("adminId")) {
-      dispatch(adminActions.login());
+    const userId = localStorage.getItem("userId");
+    const role = localStorage.getItem("role");
+    if (userId && role) {
+      dispatch(authActions.login({ userId, role, token: localStorage.getItem("token") }));
     }
   }, [dispatch]);
+
   return (
     <div>
       <Header />
@@ -32,27 +34,25 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/movies" element={<Movies />} />
-          {!isUserLoggedIn && !isAdminLoggedIn && (
+          {!isLoggedIn && (
             <>
-              {" "}
-              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin-login" element={<Admin />} />
               <Route path="/auth" element={<Auth />} />
             </>
           )}
-          {isUserLoggedIn && !isAdminLoggedIn && (
+          {isLoggedIn && userRole === "user" && (
             <>
-              {" "}
               <Route path="/user" element={<UserProfile />} />
               <Route path="/booking/:id" element={<Booking />} />
             </>
           )}
-          {isAdminLoggedIn && !isUserLoggedIn && (
+          {isLoggedIn && userRole === "admin" && (
             <>
-              {" "}
               <Route path="/add" element={<AddMovie />} />
-              <Route path="/user-admin" element={<AdminProfile />} />{" "}
+              <Route path="/user-admin" element={<AdminProfile />} />
             </>
           )}
+          <Route path="/admin/movies/:id" element={<AdminMovieDetails />} />
         </Routes>
       </section>
     </div>

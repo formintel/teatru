@@ -1,3 +1,4 @@
+// src/components/Header.js
 import React, { useEffect, useState } from "react";
 import {
   AppBar,
@@ -13,16 +14,16 @@ import { Box } from "@mui/system";
 import { getAllMovies } from "../api-helpers/api-helpers";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { adminActions, userActions } from "../store";
+import { authActions } from "../store";
 import dramaLogo from "../assets/images/drama-logo.jpg";
-import SearchIcon from '@mui/icons-material/Search';
+import SearchIcon from "@mui/icons-material/Search";
 
 const Header = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const isAdminLoggedIn = useSelector((state) => state.admin.isLoggedIn);
-  const isUserLoggedIn = useSelector((state) => state.user.isLoggedIn);
-  const [value, setValue] = useState();
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  const userRole = useSelector((state) => state.auth.role);
+  const [value, setValue] = useState(null); // Setăm valoarea inițială ca null
   const [movies, setMovies] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
@@ -34,8 +35,7 @@ const Header = () => {
   }, []);
 
   const logout = () => {
-    dispatch(adminActions.logout());
-    dispatch(userActions.logout());
+    dispatch(authActions.logout());
     navigate("/");
   };
 
@@ -45,6 +45,7 @@ const Header = () => {
       navigate(`/movies?search=${encodeURIComponent(searchQuery.trim())}`);
       setShowSearch(false);
       setSearchQuery("");
+      setValue(null); // Resetăm valoarea selectată
     }
   };
 
@@ -52,6 +53,7 @@ const Header = () => {
     if (newValue) {
       navigate(`/movies?search=${encodeURIComponent(newValue.title)}`);
       setSearchQuery("");
+      setValue(null); // Resetăm valoarea selectată
     }
   };
 
@@ -61,9 +63,9 @@ const Header = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-3">
             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden">
-              <img 
-                src={dramaLogo} 
-                alt="DramArena Logo" 
+              <img
+                src={dramaLogo}
+                alt="DramArena Logo"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -71,7 +73,7 @@ const Header = () => {
               DramArena
             </div>
           </Link>
-          
+
           <div className="flex items-center space-x-6">
             <div className="relative">
               <Autocomplete
@@ -90,30 +92,30 @@ const Header = () => {
                     size="small"
                     sx={{
                       width: 250,
-                      '& .MuiOutlinedInput-root': {
-                        color: 'white',
-                        '& fieldset': {
-                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                      "& .MuiOutlinedInput-root": {
+                        color: "white",
+                        "& fieldset": {
+                          borderColor: "rgba(255, 255, 255, 0.3)",
                         },
-                        '&:hover fieldset': {
-                          borderColor: 'rgba(255, 255, 255, 0.5)',
+                        "&:hover fieldset": {
+                          borderColor: "rgba(255, 255, 255, 0.5)",
                         },
-                        '&.Mui-focused fieldset': {
-                          borderColor: 'white',
+                        "&.Mui-focused fieldset": {
+                          borderColor: "white",
                         },
                       },
-                      '& .MuiInputBase-input::placeholder': {
-                        color: 'rgba(255, 255, 255, 0.7)',
+                      "& .MuiInputBase-input::placeholder": {
+                        color: "rgba(255, 255, 255, 0.7)",
                       },
                     }}
                   />
                 )}
                 sx={{
-                  '& .MuiAutocomplete-popupIndicator': {
-                    color: 'white',
+                  "& .MuiAutocomplete-popupIndicator": {
+                    color: "white",
                   },
-                  '& .MuiAutocomplete-clearIndicator': {
-                    color: 'white',
+                  "& .MuiAutocomplete-clearIndicator": {
+                    color: "white",
                   },
                 }}
               />
@@ -122,11 +124,11 @@ const Header = () => {
             <Link to="/movies" className="text-white hover:text-red-200 transition-colors duration-300">
               Spectacole
             </Link>
-            
-            {!isUserLoggedIn && !isAdminLoggedIn && (
+
+            {!isLoggedIn && (
               <>
-                <Link 
-                  to="/admin" 
+                <Link
+                  to="/admin-login"
                   className="text-white hover:text-red-200 transition-colors duration-300 text-sm opacity-70 hover:opacity-100"
                 >
                   Admin
@@ -136,8 +138,8 @@ const Header = () => {
                 </Link>
               </>
             )}
-            
-            {isUserLoggedIn && !isAdminLoggedIn && (
+
+            {isLoggedIn && userRole === "user" && (
               <>
                 <Link to="/user" className="text-white hover:text-red-200 transition-colors duration-300">
                   Profil
@@ -150,14 +152,14 @@ const Header = () => {
                 </button>
               </>
             )}
-            
-            {isAdminLoggedIn && !isUserLoggedIn && (
+
+            {isLoggedIn && userRole === "admin" && (
               <>
+                <Link to="/user-admin" className="text-white hover:text-red-200 transition-colors duration-300">
+                  Panou Admin
+                </Link>
                 <Link to="/add" className="text-white hover:text-red-200 transition-colors duration-300">
                   Adaugă Spectacol
-                </Link>
-                <Link to="/user-admin" className="text-white hover:text-red-200 transition-colors duration-300">
-                  Profil
                 </Link>
                 <button
                   onClick={logout}

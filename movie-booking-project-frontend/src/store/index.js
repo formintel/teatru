@@ -1,40 +1,37 @@
+// store/index.js
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
-const userSclice = createSlice({
-  name: "user",
-  initialState: { isLoggedIn: false },
-  reducers: {
-    login(state) {
-      state.isLoggedIn = true;
-    },
-    logout(state) {
-      localStorage.removeItem("userId");
-      state.isLoggedIn = false;
-    },
-  },
-});
-
-const adminSlice = createSlice({
+const authSlice = createSlice({
   name: "auth",
-  initialState: { isLoggedIn: false },
+  initialState: {
+    isLoggedIn: false,
+    userId: null,
+    role: null, // "user" sau "admin"
+    token: null,
+  },
   reducers: {
-    login(state) {
+    login(state, action) {
       state.isLoggedIn = true;
+      state.userId = action.payload.userId;
+      state.role = action.payload.role;
+      state.token = action.payload.token;
     },
     logout(state) {
-      localStorage.removeItem("adminId");
-      localStorage.removeItem("token");
       state.isLoggedIn = false;
+      state.userId = null;
+      state.role = null;
+      state.token = null;
+      localStorage.removeItem("userId");
+      localStorage.removeItem("role");
+      localStorage.removeItem("token");
     },
   },
 });
 
-export const userActions = userSclice.actions;
-export const adminActions = adminSlice.actions;
+export const authActions = authSlice.actions;
 
 export const store = configureStore({
   reducer: {
-    user: userSclice.reducer,
-    admin: adminSlice.reducer,
+    auth: authSlice.reducer,
   },
 });
