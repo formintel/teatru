@@ -21,7 +21,21 @@ const movieSchema = new mongoose.Schema({
       availableSeats: { type: Number, required: true }
     }
   ],
-  
+  ratings: [{
+    userId: { type: mongoose.Types.ObjectId, ref: "User" },
+    value: { type: Number, min: 1, max: 5, required: true },
+    createdAt: { type: Date, default: Date.now }
+  }],
+  averageRating: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 5
+  },
+  totalRatings: {
+    type: Number,
+    default: 0
+  },
   posterUrl: {
     type: String,
     required: true,
@@ -61,6 +75,19 @@ const movieSchema = new mongoose.Schema({
   },
 }, {
   timestamps: true
+});
+
+// Middleware pentru a asigura că averageRating și totalRatings sunt actualizate
+movieSchema.pre('save', function(next) {
+  if (this.ratings && this.ratings.length > 0) {
+    const totalValue = this.ratings.reduce((sum, rating) => sum + rating.value, 0);
+    this.averageRating = totalValue / this.ratings.length;
+    this.totalRatings = this.ratings.length;
+  } else {
+    this.averageRating = 0;
+    this.totalRatings = 0;
+  }
+  next();
 });
 
 export default mongoose.model("Movie", movieSchema);

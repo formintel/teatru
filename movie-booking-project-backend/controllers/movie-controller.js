@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import Admin from "../models/Admin.js";
 import Movie from "../models/Movie.js";
+
 export const addMovie = async (req, res, next) => {
   const extractedToken = req.headers.authorization?.split(" ")[1];
   if (!extractedToken) {
@@ -294,5 +295,106 @@ export const deleteMovie = async (req, res, next) => {
   } catch (err) {
     console.error("Error deleting movie:", err);
     return res.status(500).json({ message: "Eroare la ștergerea spectacolului", error: err.message });
+  }
+};
+
+export const addRating = async (req, res, next) => {
+  console.log("addRating called with params:", req.params);
+  console.log("Request body:", req.body);
+  console.log("Full URL:", req.originalUrl);
+
+  const { movieId } = req.params;
+  const { userId, rating } = req.body;
+
+  if (!movieId || !userId || !rating) {
+    console.log("Missing required fields:", { movieId, userId, rating });
+    return res.status(400).json({ 
+      message: "Date lipsă", 
+      received: { movieId, userId, rating }
+    });
+  }
+
+  try {
+    console.log("Searching for movie with ID:", movieId);
+    const movie = await Movie.findById(movieId);
+    if (!movie) {
+      console.log("Movie not found with ID:", movieId);
+      return res.status(404).json({ message: "Spectacolul nu a fost găsit" });
+    }
+
+    console.log("Found movie:", movie.title);
+
+    // Verifică dacă utilizatorul a dat deja un rating
+    const existingRatingIndex = movie.ratings.findIndex(r => r.userId.toString() === userId);
+    
+    if (existingRatingIndex !== -1) {
+      console.log("Updating existing rating");
+      // Actualizează rating-ul existent
+      movie.ratings[existingRatingIndex].value = rating;
+      movie.ratings[existingRatingIndex].createdAt = new Date();
+    } else {
+      console.log("Adding new rating");
+      // Adaugă un nou rating
+      movie.ratings.push({
+        userId,
+        value: rating,
+        createdAt: new Date()
+      });
+    }
+
+    await movie.save();
+    console.log("Movie saved successfully");
+
+    res.status(200).json({
+      message: "Rating adăugat cu succes",
+      averageRating: movie.averageRating,
+      totalRatings: movie.totalRatings
+    });
+  } catch (err) {
+    console.error("Error in addRating:", err);
+    return res.status(500).json({ 
+      message: "Eroare la adăugarea rating-ului",
+      error: err.message 
+    });
+  }
+};
+
+export const getUserRating = async (req, res, next) => {
+  console.log("getUserRating called with params:", req.params);
+  console.log("Query params:", req.query);
+  console.log("Full URL:", req.originalUrl);
+
+  const { movieId } = req.params;
+  const { userId } = req.query;
+
+  if (!movieId || !userId) {
+    console.log("Missing required fields:", { movieId, userId });
+    return res.status(400).json({ 
+      message: "Date lipsă",
+      received: { movieId, userId }
+    });
+  }
+
+  try {
+    console.log("Searching for movie with ID:", movieId);
+    const movie = await Movie.findById(movieId);
+    if (!movie) {
+      console.log("Movie not found with ID:", movieId);
+      return res.status(404).json({ message: "Spectacolul nu a fost găsit" });
+    }
+
+    console.log("Found movie:", movie.title);
+    const userRating = movie.ratings.find(r => r.userId.toString() === userId);
+    console.log("User rating found:", userRating);
+    
+    res.status(200).json({
+      rating: userRating ? userRating.value : 0
+    });
+  } catch (err) {
+    console.error("Error in getUserRating:", err);
+    return res.status(500).json({ 
+      message: "Eroare la obținerea rating-ului",
+      error: err.message 
+    });
   }
 };

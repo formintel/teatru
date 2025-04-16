@@ -1,17 +1,22 @@
 import { Typography, Box, Grid, Card, CardContent, Chip, Divider, Button } from "@mui/material";
 import React, { Fragment, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getMovieDetails } from "../../api-helpers/api-helpers";
+import { getMovieDetails, addRating, getUserRating } from "../../api-helpers/api-helpers";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import RatingComponent from "./RatingComponent";
+import { useSelector } from "react-redux";
 
 const AdminMovieDetails = () => {
-  const [movie, setMovie] = useState();
+  const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const id = useParams().id;
+  const [userRating, setUserRating] = useState(0);
+  const { id } = useParams();
   const navigate = useNavigate();
+  const userId = useSelector((state) => state.auth.userId);
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
 
   useEffect(() => {
     setLoading(true);
@@ -20,6 +25,11 @@ const AdminMovieDetails = () => {
         console.log("Date complete primite de la backend:", res);
         console.log("ShowTimes din backend:", res.movie.showTimes);
         setMovie(res.movie);
+        if (isLoggedIn) {
+          getUserRating(id, userId)
+            .then(rating => setUserRating(rating))
+            .catch(err => console.log(err));
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -27,7 +37,27 @@ const AdminMovieDetails = () => {
         setError("Nu s-a putut încărca spectacolul.");
         setLoading(false);
       });
-  }, [id]);
+  }, [id, userId, isLoggedIn]);
+
+  const handleRatingChange = async (newValue) => {
+    if (!isLoggedIn) {
+      alert("Trebuie să fii autentificat pentru a evalua spectacolul!");
+      return;
+    }
+
+    try {
+      const result = await addRating(id, userId, newValue);
+      setMovie(prev => ({
+        ...prev,
+        averageRating: result.averageRating,
+        totalRatings: result.totalRatings
+      }));
+      setUserRating(newValue);
+    } catch (err) {
+      console.log(err);
+      alert("Eroare la adăugarea rating-ului!");
+    }
+  };
 
   if (loading) {
     return <Typography textAlign="center" variant="h5" mt={5}>Se încarcă detaliile spectacolului...</Typography>;
@@ -74,6 +104,15 @@ const AdminMovieDetails = () => {
                         boxShadow: 3,
                       }}
                     />
+                    <Box className="mt-4">
+                      <RatingComponent
+                        averageRating={movie.averageRating || 0}
+                        totalRatings={movie.totalRatings || 0}
+                        userRating={userRating}
+                        onRatingChange={handleRatingChange}
+                        readOnly={false}
+                      />
+                    </Box>
                   </Grid>
 
                   <Grid item xs={12} md={8}>

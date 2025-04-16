@@ -7,6 +7,7 @@ import { useSelector } from "react-redux";
 import { IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import RatingComponent from './Movies/RatingComponent';
 
 const HomePage = () => {
   const [spectacole, setSpectacole] = useState([]);
@@ -24,7 +25,7 @@ const HomePage = () => {
   }, []);
 
   const handleOpen = (movie) => {
-    navigate(`/admin/movies/${movie._id}`);
+    navigate(`/movies/${movie._id}`);
   };
 
   const handleDelete = async (id) => {
@@ -98,11 +99,7 @@ const HomePage = () => {
                 <div 
                   className="relative cursor-pointer"
                   onClick={() => {
-                    if (userRole === "admin") {
-                      handleOpen(spectacol);
-                    } else {
-                      navigate(`/movies/${spectacol._id}`);
-                    }
+                    navigate(`/movies/${spectacol._id}`);
                   }}
                 >
                   <img
@@ -116,6 +113,13 @@ const HomePage = () => {
                       <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">{spectacol.gen}</span>
                       <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{spectacol.durata} min</span>
                       <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Sala {spectacol.sala}</span>
+                    </div>
+                    <div className="mb-3">
+                      <RatingComponent
+                        averageRating={spectacol.averageRating || 0}
+                        totalRatings={spectacol.totalRatings || 0}
+                        readOnly={true}
+                      />
                     </div>
                     <p className="text-gray-500 text-sm mb-2">Regia: {spectacol.regizor}</p>
                     <p className="text-gray-600 mb-4 line-clamp-3">{spectacol.description}</p>

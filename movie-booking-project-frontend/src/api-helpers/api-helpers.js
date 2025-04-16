@@ -452,3 +452,26 @@ export const getAdminStatistics = async () => {
     throw err;
   }
 };
+
+export const addRating = async (movieId, userId, rating) => {
+  const res = await axios.post(`/movie/${movieId}/rate`, {
+    userId,
+    rating
+  });
+  
+  if (res.status !== 200) {
+    throw new Error("Eroare la adăugarea rating-ului");
+  }
+  
+  return res.data;
+};
+
+export const getUserRating = async (movieId, userId) => {
+  const res = await axios.get(`/movie/${movieId}/rating?userId=${userId}`);
+  
+  if (res.status !== 200) {
+    throw new Error("Eroare la obținerea rating-ului");
+  }
+  
+  return res.data.rating;
+};

@@ -4,7 +4,9 @@ import {
   getAllMovies,
   getMovieById,
   updateMovie,
-  deleteMovie
+  deleteMovie,
+  addRating,
+  getUserRating
 } from "../controllers/movie-controller.js";
 
 const movieRouter = express.Router();
@@ -18,18 +20,11 @@ movieRouter.use((req, res, next) => {
 movieRouter.get("/", getAllMovies);
 movieRouter.get("/:id", getMovieById);
 movieRouter.post("/", addMovie);
+movieRouter.put("/:id", updateMovie);
+movieRouter.delete("/:id", deleteMovie);
 
-// Ruta pentru actualizare cu logging
-movieRouter.put("/:id", (req, res, next) => {
-  console.log(`Update movie route hit: ${req.method} ${req.url}`);
-  console.log("Request body:", req.body);
-  updateMovie(req, res, next);
-});
-
-// Ruta pentru ștergere cu logging
-movieRouter.delete("/:id", (req, res, next) => {
-  console.log(`Delete movie route hit: ${req.method} ${req.url}`);
-  deleteMovie(req, res, next);
-});
+// Rute pentru rating
+movieRouter.post("/:movieId/rate", addRating);
+movieRouter.get("/:movieId/rating", getUserRating);
 
 export default movieRouter;

@@ -24,13 +24,21 @@ const Header = () => {
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   const userRole = useSelector((state) => state.auth.role);
   const [value, setValue] = useState(null); // Setăm valoarea inițială ca null
-  const [movies, setMovies] = useState([]);
+  const [allMovies, setAllMovies] = useState([]); // Stocăm toate spectacolele
+  const [filteredMovies, setFilteredMovies] = useState([]); // Spectacolele filtrate pentru afișare
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     getAllMovies()
-      .then((data) => setMovies(data.movies))
+      .then((data) => {
+        setAllMovies(data.movies);
+        // Inițial afișăm top 10 spectacole după rating
+        const topMovies = data.movies
+          .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0))
+          .slice(0, 10);
+        setFilteredMovies(topMovies);
+      })
       .catch((err) => console.log(err));
   }, []);
 
@@ -39,13 +47,24 @@ const Header = () => {
     navigate("/");
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/movies?search=${encodeURIComponent(searchQuery.trim())}`);
-      setShowSearch(false);
-      setSearchQuery("");
-      setValue(null); // Resetăm valoarea selectată
+  const handleSearchChange = (event, newInputValue) => {
+    setSearchQuery(newInputValue);
+    
+    if (newInputValue.trim() === '') {
+      // Dacă nu există text de căutare, afișăm top 10
+      const topMovies = allMovies
+        .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0))
+        .slice(0, 10);
+      setFilteredMovies(topMovies);
+    } else {
+      // Dacă există text de căutare, căutăm în toate spectacolele
+      const searchResults = allMovies.filter(movie =>
+        movie.title.toLowerCase().includes(newInputValue.toLowerCase()) ||
+        movie.description.toLowerCase().includes(newInputValue.toLowerCase()) ||
+        movie.gen.toLowerCase().includes(newInputValue.toLowerCase()) ||
+        movie.regizor.toLowerCase().includes(newInputValue.toLowerCase())
+      );
+      setFilteredMovies(searchResults);
     }
   };
 
@@ -80,18 +99,16 @@ const Header = () => {
                 value={value}
                 onChange={handleMovieSelect}
                 inputValue={searchQuery}
-                onInputChange={(event, newInputValue) => {
-                  setSearchQuery(newInputValue);
-                }}
-                options={movies}
-                getOptionLabel={(option) => option.title}
+                onInputChange={handleSearchChange}
+                options={filteredMovies}
+                getOptionLabel={(option) => `${option.title} (Rating: ${option.averageRating?.toFixed(1) || '0.0'})`}
                 renderInput={(params) => (
                   <TextField
                     {...params}
                     placeholder="Caută spectacole..."
                     size="small"
                     sx={{
-                      width: 250,
+                      width: 300,
                       "& .MuiOutlinedInput-root": {
                         color: "white",
                         "& fieldset": {

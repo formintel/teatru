@@ -6,6 +6,7 @@ import { getAllMovies, updateMovie, deleteMovie } from "../../api-helpers/api-he
 import { Typography, Modal, TextField, Button, IconButton, Box } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import RatingComponent from "./RatingComponent";
 
 const style = {
   position: "absolute",
@@ -62,12 +63,15 @@ const Movies = () => {
       });
   }, []);
 
-  const filteredMovies = movies?.filter((movie) =>
-    movie.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    movie.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    movie.gen.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    movie.regizor.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredMovies = movies
+    ?.filter((movie) =>
+      movie.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      movie.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      movie.gen.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      movie.regizor.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0))
+    .slice(0, 10);
 
   const handleOpen = (movie) => {
     console.log("handleOpen apelat pentru filmul:", movie);
@@ -162,7 +166,7 @@ const Movies = () => {
     <div className="min-h-screen bg-gray-100 py-12">
       <div className="container mx-auto px-4">
         <h2 className="text-4xl font-bold text-gray-800 mb-12 text-center font-serif">
-          {searchQuery ? `Rezultate pentru "${searchQuery}"` : "Toate spectacolele noastre"}
+          {searchQuery ? `Top 10 rezultate pentru "${searchQuery}"` : "Top 10 spectacole"}
         </h2>
         {error && (
           <Typography color="error" textAlign="center" marginTop={2}>
@@ -183,7 +187,7 @@ const Movies = () => {
                   userRole === "admin" ? "opacity-75" : "hover:scale-105"
                 }`}
               >
-                <Link to={userRole === "admin" ? `/admin/movies/${movie._id}` : `/movies/${movie._id}`}>
+                <Link to={`/movies/${movie._id}`}>
                   <img
                     src={movie.posterUrl}
                     alt={movie.title}
@@ -195,6 +199,13 @@ const Movies = () => {
                       <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">{movie.gen}</span>
                       <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{movie.durata} min</span>
                       <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Sala {movie.sala}</span>
+                    </div>
+                    <div className="mb-3">
+                      <RatingComponent
+                        averageRating={movie.averageRating || 0}
+                        totalRatings={movie.totalRatings || 0}
+                        readOnly={true}
+                      />
                     </div>
                     <p className="text-gray-500 text-sm mb-2">Regia: {movie.regizor}</p>
                     <p className="text-gray-600 mb-4 line-clamp-3">{movie.description}</p>
