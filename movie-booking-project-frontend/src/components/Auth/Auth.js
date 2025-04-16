@@ -14,16 +14,22 @@ const Auth = () => {
 
   const onResReceived = (data) => {
     console.log("Răspuns primit:", data);
-    if (data.message === "Login Successfull") {
+    if (data.token) {
+      const role = data.role || "user";
       dispatch(authActions.login({
         userId: data.id,
-        role: data.role, // Setează rolul
+        role: role,
         token: data.token,
       }));
       localStorage.setItem("userId", data.id);
-      localStorage.setItem("role", data.role); // Salvează rolul
+      localStorage.setItem("role", role);
       localStorage.setItem("token", data.token);
-      navigate("/");
+      
+      if (role === "admin") {
+        navigate("/user-admin");
+      } else {
+        navigate("/");
+      }
     } else if (data.success) {
       setSuccess(data.message);
       setError("");
@@ -39,8 +45,10 @@ const Auth = () => {
     console.log("Încercare autentificare:", data);
     setError("");
     setSuccess("");
+
     try {
       const response = await sendUserAuthRequest(data.inputs, data.signup);
+      console.log("Răspuns autentificare:", response);
       onResReceived(response);
     } catch (err) {
       console.log("Eroare în componenta Auth:", err);

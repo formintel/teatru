@@ -35,11 +35,9 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/movies" element={<Movies />} />
           <Route path="/movies/:id" element={<AdminMovieDetails />} />
+          <Route path="/auth" element={<Auth />} />
           {!isLoggedIn && (
-            <>
-              <Route path="/admin-login" element={<Admin />} />
-              <Route path="/auth" element={<Auth />} />
-            </>
+            <Route path="/admin-login" element={<Admin />} />
           )}
           {isLoggedIn && userRole === "user" && (
             <>

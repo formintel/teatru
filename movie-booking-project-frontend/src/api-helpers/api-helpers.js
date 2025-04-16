@@ -2,8 +2,49 @@
 import axios from "axios";
 
 // Configurare pentru axios
-axios.defaults.baseURL = "http://localhost:5000";
-axios.defaults.headers.common["Content-Type"] = "application/json";
+const instance = axios.create({
+  baseURL: "http://localhost:5000",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  timeout: 5000, // timeout de 5 secunde
+});
+
+// Interceptor pentru request-uri
+instance.interceptors.request.use(
+  (config) => {
+    console.log("Request config:", {
+      url: config.url,
+      method: config.method,
+      data: config.data,
+      headers: config.headers
+    });
+    return config;
+  },
+  (error) => {
+    console.error("Request error:", error);
+    return Promise.reject(error);
+  }
+);
+
+// Interceptor pentru response-uri
+instance.interceptors.response.use(
+  (response) => {
+    console.log("Response received:", {
+      status: response.status,
+      data: response.data
+    });
+    return response;
+  },
+  (error) => {
+    console.error("Response error:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    return Promise.reject(error);
+  }
+);
 
 // Funcție pentru a obține header-ul de autentificare
 const getAuthHeader = () => {
@@ -14,7 +55,7 @@ const getAuthHeader = () => {
 // Preluare toate spectacolele
 export const getAllMovies = async (inCurs = false) => {
   try {
-    const res = await axios.get(`/movie?inCurs=${inCurs}`);
+    const res = await instance.get(`/movie?inCurs=${inCurs}`);
     if (res.status !== 200) {
       throw new Error("Eroare la preluarea spectacolelor");
     }
@@ -28,7 +69,7 @@ export const getAllMovies = async (inCurs = false) => {
 // Preluare detalii spectacol
 export const getMovieDetails = async (id) => {
   try {
-    const res = await axios.get(`/movie/${id}`);
+    const res = await instance.get(`/movie/${id}`);
     if (res.status !== 200) {
       throw new Error("Eroare la preluarea detaliilor spectacolului");
     }
@@ -42,32 +83,43 @@ export const getMovieDetails = async (id) => {
 // Autentificare utilizator
 export const sendUserAuthRequest = async (inputs, signup) => {
   try {
-    console.log("Încercăm să trimitem request către:", `/user/${signup ? "signup" : "login"}`);
-    console.log("Date trimise:", inputs);
+    if (signup) {
+      // Pentru înregistrare, folosim doar user
+      const res = await instance.post("/user/signup", inputs);
+      if (res.status === 201) {
+        return { message: "Înregistrare reușită! Te poți autentifica acum.", success: true };
+      }
+    } else {
+      // Pentru login, încercăm mai întâi ca admin
+      try {
+        const adminRes = await instance.post("/admin/login", {
+          email: inputs.email,
+          password: inputs.password,
+        });
 
-    const res = await axios.post(`/user/${signup ? "signup" : "login"}`, inputs);
-    console.log("Răspuns primit:", res);
+        if (adminRes.data.token) {
+          return {
+            ...adminRes.data,
+            role: "admin",
+          };
+        }
+      } catch (adminErr) {
+        // Dacă autentificarea ca admin a eșuat, încercăm ca user
+        const userRes = await instance.post("/user/login", inputs);
+        
+        if (!userRes.data.token) {
+          throw new Error("Nu s-a putut obține token-ul de autentificare");
+        }
 
-    if (signup && res.status === 201) {
-      return { message: "Înregistrare reușită! Te poți autentifica acum.", success: true };
+        return {
+          ...userRes.data,
+          role: "user",
+        };
+      }
     }
-
-    return {
-      ...res.data,
-      role: "user", // Adaugă rolul
-    };
   } catch (err) {
-    console.log("Eroare la autentificare - detalii complete:", {
-      error: err,
-      response: err.response,
-      data: err.response?.data,
-      status: err.response?.status,
-    });
-
-    if (!err.response) {
-      throw { message: "Nu s-a putut conecta la server. Verifică dacă serverul backend este pornit." };
-    }
-
+    console.error("Eroare la autentificare:", err.response?.data || err.message);
+    
     if (err.response?.data?.message) {
       throw { message: err.response.data.message };
     }
@@ -86,28 +138,38 @@ export const sendAdminAuthRequest = async (data) => {
     console.log("Încercăm să trimitem request către /admin/login");
     console.log("Date trimise:", data);
 
-    const res = await axios.post("/admin/login", {
+    const res = await instance.post("/admin/login", {
       email: data.email,
       password: data.password,
     });
 
-    console.log("Răspuns primit:", res);
-    
-    // Salvăm ID-ul adminului în localStorage
-    if (res.data.id) {
-      localStorage.setItem("adminId", res.data.id);
-    }
+    console.log("Răspuns primit:", {
+      status: res.status,
+      statusText: res.statusText,
+      data: res.data,
+      headers: res.headers
+    });
 
+    if (!res.data.token) {
+      console.error("Nu s-a primit token în răspuns:", res.data);
+      throw new Error("Nu s-a putut obține token-ul de autentificare");
+    }
+    
     return {
       ...res.data,
-      role: "admin", // Adaugă rolul
+      role: "admin",
     };
   } catch (err) {
-    console.log("Eroare la autentificare admin - detalii complete:", {
+    console.error("Eroare la autentificare admin - detalii complete:", {
       error: err,
       response: err.response,
       data: err.response?.data,
       status: err.response?.status,
+      config: {
+        url: err.config?.url,
+        method: err.config?.method,
+        data: err.config?.data
+      }
     });
 
     if (!err.response) {
@@ -127,7 +189,7 @@ export const addMovie = async (data) => {
   try {
     console.log("Încercăm să adăugăm spectacolul:", data);
     
-    const res = await axios.post(
+    const res = await instance.post(
       "/movie",
       {
         title: data.title,
@@ -192,8 +254,8 @@ export const updateMovie = async (id, data) => {
 
     console.log("Date procesate pentru actualizare:", updateData);
 
-    const response = await axios.put(
-      `${axios.defaults.baseURL}/movie/${id}`,
+    const response = await instance.put(
+      `/movie/${id}`,
       updateData,
       {
         headers: {
@@ -211,7 +273,7 @@ export const updateMovie = async (id, data) => {
 // Șterge un spectacol
 export const deleteMovie = async (id) => {
   try {
-    const res = await axios.delete(`/movie/${id}`, {
+    const res = await instance.delete(`/movie/${id}`, {
       headers: getAuthHeader(),
     });
 
@@ -229,7 +291,7 @@ export const deleteMovie = async (id) => {
 // Anulează un spectacol
 export const cancelMovie = async (id) => {
   try {
-    const res = await axios.post(
+    const res = await instance.post(
       `/movie/${id}/cancel`,
       {},
       {
@@ -251,7 +313,7 @@ export const cancelMovie = async (id) => {
 // Creează o rezervare
 export const newBooking = async (data) => {
   try {
-    const res = await axios.post("/booking", {
+    const res = await instance.post("/booking", {
       movie: data.movie,
       seatNumber: data.seatNumber,
       date: data.date,
@@ -273,7 +335,7 @@ export const newBooking = async (data) => {
 // Preluare locurile ocupate
 export const getOccupiedSeats = async (movieId, showTimeId) => {
   try {
-    const res = await axios.get(`/booking/occupied-seats?movieId=${movieId}&showTimeId=${showTimeId}`);
+    const res = await instance.get(`/booking/occupied-seats?movieId=${movieId}&showTimeId=${showTimeId}`);
     return res.data;
   } catch (err) {
     console.error("Eroare la preluarea locurilor ocupate:", err);
@@ -285,7 +347,7 @@ export const getOccupiedSeats = async (movieId, showTimeId) => {
 export const getUserBooking = async () => {
   try {
     const id = localStorage.getItem("userId");
-    const res = await axios.get(`/user/bookings/${id}`);
+    const res = await instance.get(`/user/bookings/${id}`);
 
     if (res.status !== 200) {
       throw new Error("Eroare la preluarea rezervărilor utilizatorului");
@@ -301,7 +363,7 @@ export const getUserBooking = async () => {
 // Șterge o rezervare
 export const deleteBooking = async (id) => {
   try {
-    const res = await axios.delete(`/booking/${id}`);
+    const res = await instance.delete(`/booking/${id}`);
 
     if (res.status !== 200) {
       throw new Error("Eroare la ștergerea rezervării");
@@ -318,7 +380,7 @@ export const deleteBooking = async (id) => {
 export const getUserDetails = async () => {
   try {
     const id = localStorage.getItem("userId");
-    const res = await axios.get(`/user/${id}`);
+    const res = await instance.get(`/user/${id}`);
 
     if (res.status !== 200) {
       throw new Error("Eroare la preluarea detaliilor utilizatorului");
@@ -335,7 +397,7 @@ export const getUserDetails = async () => {
 export const getAdminById = async () => {
   try {
     const adminId = localStorage.getItem("userId"); // Folosim userId (unificat)
-    const res = await axios.get(`/admin/${adminId}`);
+    const res = await instance.get(`/admin/${adminId}`);
 
     if (res.status !== 200) {
       throw new Error("Eroare la preluarea detaliilor adminului");
@@ -351,7 +413,7 @@ export const getAdminById = async () => {
 // Preluare toate rezervările (pentru admin)
 export const getAllBookings = async () => {
   try {
-    const res = await axios.get("/admin/bookings", {
+    const res = await instance.get("/admin/bookings", {
       headers: getAuthHeader(),
     });
 
@@ -369,7 +431,7 @@ export const getAllBookings = async () => {
 // Preluare statistici (pentru admin)
 export const getStatistics = async () => {
   try {
-    const res = await axios.get("/admin/statistics", {
+    const res = await instance.get("/admin/statistics", {
       headers: getAuthHeader(),
     });
 
@@ -392,7 +454,7 @@ export const getAdminData = async () => {
       throw new Error("Nu există admin autentificat");
     }
 
-    const res = await axios.get(`/admin/${adminId}`, {
+    const res = await instance.get(`/admin/${adminId}`, {
       headers: getAuthHeader(),
     });
 
@@ -415,7 +477,7 @@ export const getAdminBookings = async () => {
       throw new Error("Nu există admin autentificat");
     }
 
-    const res = await axios.get(`/admin/${adminId}/bookings`, {
+    const res = await instance.get(`/admin/${adminId}/bookings`, {
       headers: getAuthHeader(),
     });
 
@@ -438,7 +500,7 @@ export const getAdminStatistics = async () => {
       throw new Error("Nu există admin autentificat");
     }
 
-    const res = await axios.get(`/admin/${adminId}/statistics`, {
+    const res = await instance.get(`/admin/${adminId}/statistics`, {
       headers: getAuthHeader(),
     });
 
@@ -454,7 +516,7 @@ export const getAdminStatistics = async () => {
 };
 
 export const addRating = async (movieId, userId, rating) => {
-  const res = await axios.post(`/movie/${movieId}/rate`, {
+  const res = await instance.post(`/movie/${movieId}/rate`, {
     userId,
     rating
   });
@@ -467,7 +529,7 @@ export const addRating = async (movieId, userId, rating) => {
 };
 
 export const getUserRating = async (movieId, userId) => {
-  const res = await axios.get(`/movie/${movieId}/rating?userId=${userId}`);
+  const res = await instance.get(`/movie/${movieId}/rating?userId=${userId}`);
   
   if (res.status !== 200) {
     throw new Error("Eroare la obținerea rating-ului");

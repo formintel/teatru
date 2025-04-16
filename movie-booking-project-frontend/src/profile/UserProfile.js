@@ -12,27 +12,68 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { IconButton } from "@mui/material";
 
 const UserProfile = () => {
-  const [bookings, setBookings] = useState();
-  const [user, setUser] = useState();
+  const [bookings, setBookings] = useState([]);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   useEffect(() => {
-    getUserBooking()
-      .then((res) => setBookings(res.bookings))
-      .catch((err) => console.log(err));
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [bookingsRes, userRes] = await Promise.all([
+          getUserBooking(),
+          getUserDetails()
+        ]);
+        
+        if (bookingsRes.bookings) {
+          setBookings(bookingsRes.bookings);
+        }
+        
+        if (userRes.user) {
+          setUser(userRes.user);
+        }
+      } catch (err) {
+        console.error("Eroare la preluarea datelor:", err);
+        setError("Nu s-au putut prelua datele. Te rugăm să încerci din nou.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    getUserDetails()
-      .then((res) => setUser(res.user))
-      .catch((err) => console.log(err));
+    fetchData();
   }, []);
   
-  const handleDelete = (id) => {
-    deleteBooking(id)
-      .then(() => {
-        // Actualizează starea locală după ștergere
-        setBookings(prevBookings => prevBookings.filter(booking => booking._id !== id));
-      })
-      .catch((err) => console.log(err));
+  const handleDelete = async (id) => {
+    try {
+      await deleteBooking(id);
+      setBookings(prevBookings => prevBookings.filter(booking => booking._id !== id));
+    } catch (err) {
+      console.error("Eroare la ștergerea rezervării:", err);
+      setError("Nu s-a putut șterge rezervarea. Te rugăm să încerci din nou.");
+    }
   };
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Se încarcă datele...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center text-red-600">
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -103,7 +144,9 @@ const UserProfile = () => {
                         <div className="flex-1">
                           <div className="flex items-center mb-3">
                             <LocalMoviesIcon className="text-emerald-500 mr-2" />
-                            <h4 className="text-lg font-semibold text-gray-800">{booking.movie.title}</h4>
+                            <h4 className="text-lg font-semibold text-gray-800">
+                              {booking.movie?.title || "Spectacol indisponibil"}
+                            </h4>
                           </div>
                           
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
@@ -123,48 +166,19 @@ const UserProfile = () => {
                           </div>
                         </div>
                         
-                        <div>
-                          <button
-                            onClick={() => handleDelete(booking._id)}
-                            className="p-2 rounded-full text-red-500 hover:bg-red-50 transition duration-200"
-                          >
-                            <DeleteForeverIcon />
-                          </button>
-                        </div>
+                        <IconButton 
+                          onClick={() => handleDelete(booking._id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <DeleteForeverIcon />
+                        </IconButton>
                       </div>
-                      
-                      {/* Bară de stare */}
-                      <div className="h-1 w-full bg-emerald-500"></div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-10">
-                  <svg 
-                    className="mx-auto h-12 w-12 text-gray-400" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor" 
-                    aria-hidden="true"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth="2" 
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" 
-                    />
-                  </svg>
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">Nu ai nicio rezervare</h3>
-                  <p className="mt-1 text-sm text-gray-500">Începe prin a rezerva un loc la filmul preferat.</p>
-                  <div className="mt-6">
-                    <button
-                      type="button"
-                      onClick={() => window.location.href = '/'}
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-500 hover:bg-emerald-600 focus:outline-none"
-                    >
-                      Rezervă acum
-                    </button>
-                  </div>
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Nu ai nicio rezervare.</p>
                 </div>
               )}
             </div>
