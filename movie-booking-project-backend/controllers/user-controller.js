@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import Bookings from "../models/Bookings.js";
+import jwt from "jsonwebtoken";
 
 export const getAllUsers = async (req, res, next) => {
   let users;
@@ -145,10 +146,21 @@ export const login = async (req, res, next) => {
   if (!isPasswordCorrect) {
     return res.status(400).json({ message: "Parola este incorecta" });
   }
+
+  // Generăm token-ul JWT
+  const token = jwt.sign(
+    { id: existingUser._id, email: existingUser.email },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
   
   return res
     .status(200)
-    .json({ message: "Login Successfull", id: existingUser._id });
+    .json({ 
+      message: "Login Successfull", 
+      id: existingUser._id,
+      token: token
+    });
 };
 
 export const getBookingsOfUser = async (req, res, next) => {
@@ -156,14 +168,20 @@ export const getBookingsOfUser = async (req, res, next) => {
   let bookings;
   try {
     bookings = await Bookings.find({ user: id })
-      .populate("movie")
-      .populate("user");
+      .populate({
+        path: "movie",
+        select: "title description posterUrl sala numarLocuri pret regizor durata gen"
+      })
+      .populate("user", "name email");
   } catch (err) {
-    return console.log(err);
+    console.error("Eroare la preluarea rezervărilor:", err);
+    return res.status(500).json({ message: "Nu s-au putut prelua rezervările" });
   }
+  
   if (!bookings) {
-    return res.status(500).json({ message: "Unable to get Bookings" });
+    return res.status(404).json({ message: "Nu s-au găsit rezervări" });
   }
+  
   return res.status(200).json({ bookings });
 };
 
