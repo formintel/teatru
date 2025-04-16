@@ -354,36 +354,36 @@ const AddMovie = () => {
               </button>
             </div>
             
-            <div className="mt-4">
-              <h4 className="font-medium mb-2">Reprezentații programate:</h4>
-              <div className="space-y-2">
-                {showTimes.map((time, index) => (
-                  <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <div>
-                      <span className="font-medium">
-                        {new Date(time.date).toLocaleString('ro-RO', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </span>
-                      <span className="ml-4 text-gray-600">
-                        {time.availableSeats} locuri disponibile
-                      </span>
+              <div className="mt-4">
+                <h4 className="font-medium mb-2">Reprezentații programate:</h4>
+                <div className="space-y-2">
+                  {showTimes.map((time, index) => (
+                    <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      <div>
+                        <span className="font-medium">
+                          {new Date(time.date).toLocaleString('ro-RO', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                        <span className="ml-4 text-gray-600">
+                          {time.availableSeats} locuri disponibile
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeShowTime(index)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        ×
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeShowTime(index)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
           </div>
 
           <div className="flex items-center">

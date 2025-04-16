@@ -1,14 +1,18 @@
 // src/components/HomePage.js
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { getAllMovies } from "../api-helpers/api-helpers"; // Înlocuim getAllSpectacole cu getAllMovies
+import { Link, useNavigate } from "react-router-dom";
+import { getAllMovies, deleteMovie } from "../api-helpers/api-helpers"; // Înlocuim getAllSpectacole cu getAllMovies
 import dramaLogo from "../assets/images/drama-logo.jpg";
 import { useSelector } from "react-redux";
+import { IconButton } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const HomePage = () => {
   const [spectacole, setSpectacole] = useState([]);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   const userRole = useSelector((state) => state.auth.role);
+  const navigate = useNavigate();
 
   useEffect(() => {
     getAllMovies(true) // Folosim getAllMovies în loc de getAllSpectacole
@@ -18,6 +22,24 @@ const HomePage = () => {
       })
       .catch((err) => console.log(err));
   }, []);
+
+  const handleOpen = (movie) => {
+    navigate(`/admin/movies/${movie._id}`);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Ești sigur că vrei să ștergi acest spectacol?")) {
+      try {
+        await deleteMovie(id);
+        // Reîmprospătăm lista de spectacole
+        const updatedMovies = await getAllMovies(true);
+        setSpectacole(updatedMovies.movies);
+      } catch (err) {
+        console.error("Eroare la ștergerea spectacolului:", err);
+        alert("A apărut o eroare la ștergerea spectacolului");
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -73,7 +95,16 @@ const HomePage = () => {
                   userRole === "admin" ? "opacity-75" : "hover:scale-105"
                 }`}
               >
-                <Link to={userRole === "admin" ? `/admin/movies/${spectacol._id}` : `/movies/${spectacol._id}`}>
+                <div 
+                  className="relative cursor-pointer"
+                  onClick={() => {
+                    if (userRole === "admin") {
+                      handleOpen(spectacol);
+                    } else {
+                      navigate(`/movies/${spectacol._id}`);
+                    }
+                  }}
+                >
                   <img
                     src={spectacol.posterUrl}
                     alt={spectacol.title}
@@ -81,35 +112,45 @@ const HomePage = () => {
                   />
                   <div className="p-6">
                     <h3 className="text-xl font-bold mb-2">{spectacol.title}</h3>
-                    <p className="text-gray-600 mb-4">{spectacol.description}</p>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">{spectacol.gen}</span>
+                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{spectacol.durata} min</span>
+                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Sala {spectacol.sala}</span>
+                    </div>
+                    <p className="text-gray-500 text-sm mb-2">Regia: {spectacol.regizor}</p>
+                    <p className="text-gray-600 mb-4 line-clamp-3">{spectacol.description}</p>
                     <div className="flex justify-between items-center">
-                      <span className="text-green-600 font-semibold">{spectacol.pret} RON</span>
+                      <span className="text-green-600 font-semibold">
+                        {spectacol.pret} RON
+                      </span>
                       {isLoggedIn && userRole === "user" ? (
                         <Link
                           to={`/booking/${spectacol._id}`}
                           className="bg-red-900 text-white px-4 py-2 rounded hover:bg-red-800 transition-colors duration-300"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           Rezervă
                         </Link>
+                      ) : isLoggedIn && userRole === "admin" ? (
+                        <span className="bg-gray-500 text-white px-4 py-2 rounded cursor-not-allowed">
+                          Detalii
+                        </span>
                       ) : (
-                        <span
-                          className={`px-4 py-2 rounded text-white ${
-                            userRole === "admin"
-                              ? "bg-gray-500 cursor-not-allowed"
-                              : "bg-red-900 hover:bg-red-800 transition-colors duration-300"
-                          }`}
-                        >
-                          {userRole === "admin" ? "Detalii" : "Rezervă"}
+                        <span className="bg-gray-500 text-white px-4 py-2 rounded cursor-not-allowed">
+                          Autentifică-te pentru a rezerva
                         </span>
                       )}
                     </div>
                   </div>
-                </Link>
-                {!isLoggedIn && (
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center">
-                    <div className="bg-gray-800 text-white text-sm rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      Ups... E nevoie de autentificare pentru rezervarea biletului
-                    </div>
+                </div>
+                {isLoggedIn && userRole === "admin" && (
+                  <div className="flex justify-between mt-4 px-6">
+                    <IconButton onClick={() => handleOpen(spectacol)}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton onClick={() => handleDelete(spectacol._id)}>
+                      <DeleteIcon />
+                    </IconButton>
                   </div>
                 )}
               </div>

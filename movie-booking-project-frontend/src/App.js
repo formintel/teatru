@@ -34,6 +34,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/movies" element={<Movies />} />
+          <Route path="/movies/:id" element={<AdminMovieDetails />} />
           {!isLoggedIn && (
             <>
               <Route path="/admin-login" element={<Admin />} />
@@ -52,7 +53,6 @@ function App() {
               <Route path="/user-admin" element={<AdminProfile />} />
             </>
           )}
-          <Route path="/admin/movies/:id" element={<AdminMovieDetails />} />
         </Routes>
       </section>
     </div>
