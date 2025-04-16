@@ -8,6 +8,12 @@ import { IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RatingComponent from './Movies/RatingComponent';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination, Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
+import Map from './Map';
 
 const HomePage = () => {
   const [spectacole, setSpectacole] = useState([]);
@@ -80,7 +86,7 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Featured Shows Section */}
+      {/* Carousel Section */}
       <div className="container mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center font-serif">
           Spectacole în Curs
@@ -88,27 +94,31 @@ const HomePage = () => {
         {spectacole.length === 0 ? (
           <p className="text-center text-gray-600">Nu există spectacole în curs momentan.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <Swiper
+            spaceBetween={30}
+            centeredSlides={true}
+            autoplay={{
+              delay: 5000,
+              disableOnInteraction: false,
+            }}
+            pagination={{
+              clickable: true,
+            }}
+            navigation={true}
+            modules={[Autoplay, Pagination, Navigation]}
+            className="mySwiper"
+          >
             {spectacole.map((spectacol) => (
-              <div
-                key={spectacol._id}
-                className={`bg-white rounded-lg shadow-lg overflow-hidden transform transition-transform duration-300 cursor-pointer group relative ${
-                  userRole === "admin" ? "opacity-75" : "hover:scale-105"
-                }`}
-              >
-                <div 
-                  className="relative cursor-pointer"
-                  onClick={() => {
-                    navigate(`/movies/${spectacol._id}`);
-                  }}
-                >
+              <SwiperSlide key={spectacol._id}>
+                <div className="relative h-[500px] rounded-lg overflow-hidden shadow-lg">
                   <img
                     src={spectacol.posterUrl}
                     alt={spectacol.title}
-                    className="w-full h-64 object-cover"
+                    className="w-full h-full object-cover"
                   />
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-2">{spectacol.title}</h3>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
+                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                    <h3 className="text-2xl font-bold mb-2">{spectacol.title}</h3>
                     <div className="flex flex-wrap gap-2 mb-3">
                       <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">{spectacol.gen}</span>
                       <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{spectacol.durata} min</span>
@@ -121,45 +131,24 @@ const HomePage = () => {
                         readOnly={true}
                       />
                     </div>
-                    <p className="text-gray-500 text-sm mb-2">Regia: {spectacol.regizor}</p>
-                    <p className="text-gray-600 mb-4 line-clamp-3">{spectacol.description}</p>
+                    <p className="text-gray-200 text-sm mb-2">Regia: {spectacol.regizor}</p>
+                    <p className="text-gray-300 mb-4 line-clamp-2">{spectacol.description}</p>
                     <div className="flex justify-between items-center">
-                      <span className="text-green-600 font-semibold">
+                      <span className="text-yellow-400 font-semibold">
                         {spectacol.pret} RON
                       </span>
-                      {isLoggedIn && userRole === "user" ? (
-                        <Link
-                          to={`/booking/${spectacol._id}`}
-                          className="bg-red-900 text-white px-4 py-2 rounded hover:bg-red-800 transition-colors duration-300"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Rezervă
-                        </Link>
-                      ) : isLoggedIn && userRole === "admin" ? (
-                        <span className="bg-gray-500 text-white px-4 py-2 rounded cursor-not-allowed">
-                          Detalii
-                        </span>
-                      ) : (
-                        <span className="bg-gray-500 text-white px-4 py-2 rounded cursor-not-allowed">
-                          Autentifică-te pentru a rezerva
-                        </span>
-                      )}
+                      <Link
+                        to={`/movies/${spectacol._id}`}
+                        className="bg-red-900 text-white px-4 py-2 rounded hover:bg-red-800 transition-colors duration-300"
+                      >
+                        Detalii
+                      </Link>
                     </div>
                   </div>
                 </div>
-                {isLoggedIn && userRole === "admin" && (
-                  <div className="flex justify-between mt-4 px-6">
-                    <IconButton onClick={() => handleOpen(spectacol)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton onClick={() => handleDelete(spectacol._id)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </div>
-                )}
-              </div>
+              </SwiperSlide>
             ))}
-          </div>
+          </Swiper>
         )}
       </div>
 
@@ -182,6 +171,18 @@ const HomePage = () => {
               <h3 className="text-xl font-semibold mb-2 font-serif">Bilete Digitale</h3>
               <p className="text-gray-600">Primește biletele direct pe dispozitivul tău</p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Map Section */}
+      <div className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center font-serif">
+            Cum ne găsești
+          </h2>
+          <div className="h-[400px] rounded-lg overflow-hidden shadow-lg">
+            <Map />
           </div>
         </div>
       </div>
