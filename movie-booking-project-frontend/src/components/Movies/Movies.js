@@ -3,10 +3,11 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useSearchParams } from "react-router-dom";
 import { getAllMovies, updateMovie, deleteMovie } from "../../api-helpers/api-helpers";
-import { Typography, Modal, TextField, Button, IconButton, Box } from "@mui/material";
+import { Typography, Modal, TextField, Button, IconButton, Box, FormControl, InputLabel, Select, MenuItem, Slider, Chip, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RatingComponent from "./RatingComponent";
+import SortIcon from "@mui/icons-material/Sort";
 
 const style = {
   position: "absolute",
@@ -27,6 +28,12 @@ const Movies = () => {
   const [movies, setMovies] = useState([]);
   const [error, setError] = useState(null);
   const [open, setOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    gen: "",
+    durata: [0, 300],
+    pret: [0, 200],
+    sala: "",
+  });
   const [currentMovie, setCurrentMovie] = useState({
     _id: "",
     title: "",
@@ -44,6 +51,7 @@ const Movies = () => {
   const userRole = useSelector((state) => state.auth.role);
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
+  const [sortOrder, setSortOrder] = useState('rating'); // 'rating', 'price-asc', 'price-desc'
 
   useEffect(() => {
     console.log("Încercăm să încărcăm spectacolele...");
@@ -63,14 +71,53 @@ const Movies = () => {
       });
   }, []);
 
+  const handleFilterChange = (name, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      gen: "",
+      durata: [0, 300],
+      pret: [0, 200],
+      sala: "",
+    });
+  };
+
   const filteredMovies = movies
-    ?.filter((movie) =>
-      movie.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      movie.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      movie.gen.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      movie.regizor.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+    ?.filter((movie) => {
+      const matchesSearch = 
+        movie.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        movie.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        movie.gen.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        movie.regizor.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesGen = !filters.gen || movie.gen === filters.gen;
+      const matchesDurata = 
+        movie.durata >= filters.durata[0] && 
+        movie.durata <= filters.durata[1];
+      const matchesPret = 
+        movie.pret >= filters.pret[0] && 
+        movie.pret <= filters.pret[1];
+      const matchesSala = !filters.sala || movie.sala === filters.sala;
+
+      return matchesSearch && matchesGen && matchesDurata && matchesPret && matchesSala;
+    })
+    .sort((a, b) => {
+      switch (sortOrder) {
+        case 'rating':
+          return (b.averageRating || 0) - (a.averageRating || 0);
+        case 'price-asc':
+          return a.pret - b.pret;
+        case 'price-desc':
+          return b.pret - a.pret;
+        default:
+          return 0;
+      }
+    });
 
   const handleOpen = (movie) => {
     console.log("handleOpen apelat pentru filmul:", movie);
@@ -161,13 +208,159 @@ const Movies = () => {
     }
   };
   
+  // Obținem toate genurile unice pentru filtru
+  const uniqueGenres = [...new Set(movies.map(movie => movie.gen))];
+  const uniqueSali = [...new Set(movies.map(movie => movie.sala))];
 
   return (
     <div className="min-h-screen bg-gray-100 py-12">
       <div className="container mx-auto px-4">
-        <h2 className="text-4xl font-bold text-gray-800 mb-12 text-center font-serif">
+        <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center font-serif">
           {searchQuery ? `Rezultate pentru "${searchQuery}"` : "Toate spectacolele noastre"}
         </h2>
+
+        {/* Filtre și Sortare */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Filtru Gen */}
+            <FormControl fullWidth>
+              <InputLabel>Gen</InputLabel>
+              <Select
+                value={filters.gen}
+                onChange={(e) => handleFilterChange('gen', e.target.value)}
+                label="Gen"
+              >
+                <MenuItem value="">Toate genurile</MenuItem>
+                {uniqueGenres.map((gen) => (
+                  <MenuItem key={gen} value={gen}>{gen}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Filtru Sala */}
+            <FormControl fullWidth>
+              <InputLabel>Sala</InputLabel>
+              <Select
+                value={filters.sala}
+                onChange={(e) => handleFilterChange('sala', e.target.value)}
+                label="Sala"
+              >
+                <MenuItem value="">Toate sălile</MenuItem>
+                {uniqueSali.map((sala) => (
+                  <MenuItem key={sala} value={sala}>Sala {sala}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Filtru Durată */}
+            <div>
+              <Typography gutterBottom>Durata (minute)</Typography>
+              <Slider
+                value={filters.durata}
+                onChange={(_, newValue) => handleFilterChange('durata', newValue)}
+                valueLabelDisplay="auto"
+                min={0}
+                max={300}
+                step={10}
+              />
+            </div>
+
+            {/* Filtru Preț */}
+            <div>
+              <Typography gutterBottom>Preț (RON)</Typography>
+              <Slider
+                value={filters.pret}
+                onChange={(_, newValue) => handleFilterChange('pret', newValue)}
+                valueLabelDisplay="auto"
+                min={0}
+                max={200}
+                step={10}
+              />
+            </div>
+          </div>
+
+          {/* Sortare */}
+          <div className="mt-6 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <SortIcon className="text-gray-600" />
+              <Typography variant="subtitle1" className="text-gray-700">
+                Sortează după:
+              </Typography>
+            </div>
+            <ToggleButtonGroup
+              value={sortOrder}
+              exclusive
+              onChange={(_, newValue) => newValue && setSortOrder(newValue)}
+              aria-label="sort order"
+              size="small"
+            >
+              <ToggleButton value="rating" aria-label="rating">
+                <span className="flex items-center">
+                  <span className="mr-1">Rating</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                </span>
+              </ToggleButton>
+              <ToggleButton value="price-asc" aria-label="price ascending">
+                <span className="flex items-center">
+                  <span className="mr-1">Preț</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                  </svg>
+                </span>
+              </ToggleButton>
+              <ToggleButton value="price-desc" aria-label="price descending">
+                <span className="flex items-center">
+                  <span className="mr-1">Preț</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </span>
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </div>
+
+          {/* Buton Clear Filters */}
+          <div className="mt-4 flex justify-end">
+            <Button
+              variant="outlined"
+              onClick={clearFilters}
+              className="text-red-900 border-red-900 hover:bg-red-50"
+            >
+              Șterge Filtrele
+            </Button>
+          </div>
+
+          {/* Afișare Filtre Active */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {filters.gen && (
+              <Chip
+                label={`Gen: ${filters.gen}`}
+                onDelete={() => handleFilterChange('gen', '')}
+                className="bg-red-100 text-red-800"
+              />
+            )}
+            {filters.sala && (
+              <Chip
+                label={`Sala: ${filters.sala}`}
+                onDelete={() => handleFilterChange('sala', '')}
+                className="bg-blue-100 text-blue-800"
+              />
+            )}
+            <Chip
+              label={`Durata: ${filters.durata[0]}-${filters.durata[1]} min`}
+              onDelete={() => handleFilterChange('durata', [0, 300])}
+              className="bg-green-100 text-green-800"
+            />
+            <Chip
+              label={`Preț: ${filters.pret[0]}-${filters.pret[1]} RON`}
+              onDelete={() => handleFilterChange('pret', [0, 200])}
+              className="bg-yellow-100 text-yellow-800"
+            />
+          </div>
+        </div>
+
         {error && (
           <Typography color="error" textAlign="center" marginTop={2}>
             {error}
@@ -175,7 +368,7 @@ const Movies = () => {
         )}
         {filteredMovies?.length === 0 && (
           <Typography textAlign="center" color="text.secondary">
-            Nu s-au găsit spectacole care să corespundă căutării.
+            Nu s-au găsit spectacole care să corespundă filtrelor.
           </Typography>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
