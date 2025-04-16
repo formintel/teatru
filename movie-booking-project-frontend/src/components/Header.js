@@ -68,12 +68,14 @@ const Header = () => {
     }
   };
 
-  const handleMovieSelect = (event, newValue) => {
-    if (newValue) {
-      navigate(`/movies?search=${encodeURIComponent(newValue.title)}`);
-      setSearchQuery("");
-      setValue(null); // Resetăm valoarea selectată
+  const handleMovieSelect = (event, value) => {
+    if (value) {
+      navigate(`/movies/${value._id}`);
+    } else {
+      // Când se face click pe butonul de spectacole, se încarcă toate spectacolele
+      navigate('/movies');
     }
+    setSearchQuery("");
   };
 
   return (

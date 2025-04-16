@@ -70,8 +70,7 @@ const Movies = () => {
       movie.gen.toLowerCase().includes(searchQuery.toLowerCase()) ||
       movie.regizor.toLowerCase().includes(searchQuery.toLowerCase())
     )
-    .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0))
-    .slice(0, 10);
+    .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
 
   const handleOpen = (movie) => {
     console.log("handleOpen apelat pentru filmul:", movie);
@@ -161,12 +160,13 @@ const Movies = () => {
       }
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-gray-100 py-12">
       <div className="container mx-auto px-4">
         <h2 className="text-4xl font-bold text-gray-800 mb-12 text-center font-serif">
-          {searchQuery ? `Top 10 rezultate pentru "${searchQuery}"` : "Top 10 spectacole"}
+          {searchQuery ? `Rezultate pentru "${searchQuery}"` : "Toate spectacolele noastre"}
         </h2>
         {error && (
           <Typography color="error" textAlign="center" marginTop={2}>
@@ -187,67 +187,66 @@ const Movies = () => {
                   userRole === "admin" ? "opacity-75" : "hover:scale-105"
                 }`}
               >
-                <Link to={`/movies/${movie._id}`}>
-                  <img
-                    src={movie.posterUrl}
-                    alt={movie.title}
-                    className="w-full h-64 object-cover"
-                  />
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-2">{movie.title}</h3>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">{movie.gen}</span>
-                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{movie.durata} min</span>
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Sala {movie.sala}</span>
-                    </div>
-                    <div className="mb-3">
-                      <RatingComponent
-                        averageRating={movie.averageRating || 0}
-                        totalRatings={movie.totalRatings || 0}
-                        readOnly={true}
-                      />
-                    </div>
-                    <p className="text-gray-500 text-sm mb-2">Regia: {movie.regizor}</p>
-                    <p className="text-gray-600 mb-4 line-clamp-3">{movie.description}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-green-600 font-semibold">
-                        {movie.pret} RON
-                      </span>
-                      {isLoggedIn && userRole === "user" ? (
-                        <Link
-                          to={`/booking/${movie._id}`}
-                          className="bg-red-900 text-white px-4 py-2 rounded hover:bg-red-800 transition-colors duration-300"
-                        >
-                          Rezervă
-                        </Link>
-                      ) : isLoggedIn && userRole === "admin" ? (
-                        <span className="bg-gray-500 text-white px-4 py-2 rounded cursor-not-allowed">
-                          Detalii
+                <Link to={`/movies/${movie._id}`} className="block">
+                  <div className="relative">
+                    <img
+                      src={movie.posterUrl}
+                      alt={movie.title}
+                      className="w-full h-64 object-cover"
+                    />
+                    <div className="p-6">
+                      <h3 className="text-xl font-bold mb-2">{movie.title}</h3>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">{movie.gen}</span>
+                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{movie.durata} min</span>
+                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Sala {movie.sala}</span>
+                      </div>
+                      <div className="mb-3">
+                        <RatingComponent
+                          averageRating={movie.averageRating || 0}
+                          totalRatings={movie.totalRatings || 0}
+                          readOnly={true}
+                        />
+                      </div>
+                      <p className="text-gray-500 text-sm mb-2">Regia: {movie.regizor}</p>
+                      <p className="text-gray-600 mb-4 line-clamp-3">{movie.description}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-green-600 font-semibold">
+                          {movie.pret} RON
                         </span>
-                      ) : (
-                        <Link
-                          to="/auth"
-                          className="bg-red-900 text-white px-4 py-2 rounded hover:bg-red-800 transition-colors duration-300 group relative"
-                        >
-                          Rezervă
-                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-800 text-white text-sm rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                            Ups... E nevoie de autentificare pentru rezervarea biletului
-                          </div>
-                        </Link>
-                      )}
+                      </div>
                     </div>
                   </div>
                 </Link>
-                {isLoggedIn && userRole === "admin" && (
-                  <div className="flex justify-between mt-4 px-6">
-                    <IconButton onClick={() => handleOpen(movie)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton onClick={() => handleDelete(movie._id)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </div>
-                )}
+                <div className="px-6 pb-6">
+                  {isLoggedIn && userRole === "user" ? (
+                    <Link
+                      to={`/booking/${movie._id}`}
+                      className="w-full bg-red-900 text-white px-4 py-2 rounded hover:bg-red-800 transition-colors duration-300 block text-center"
+                    >
+                      Rezervă
+                    </Link>
+                  ) : isLoggedIn && userRole === "admin" ? (
+                    <div className="flex justify-between mt-4">
+                      <IconButton onClick={() => handleOpen(movie)}>
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton onClick={() => handleDelete(movie._id)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </div>
+                  ) : (
+                    <Link
+                      to="/auth"
+                      className="w-full bg-red-900 text-white px-4 py-2 rounded hover:bg-red-800 transition-colors duration-300 block text-center group relative"
+                    >
+                      Rezervă
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-800 text-white text-sm rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                        Ups... Autentifica-te pentru rezervarea biletului
+                      </div>
+                    </Link>
+                  )}
+                </div>
               </div>
             ))}
         </div>
