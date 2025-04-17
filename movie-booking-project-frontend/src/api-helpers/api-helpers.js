@@ -69,11 +69,27 @@ export const getAllMovies = async (inCurs = false) => {
 // Preluare detalii spectacol
 export const getMovieDetails = async (id) => {
   try {
+    console.log("Încercăm să obținem detaliile filmului cu ID:", id);
     const res = await instance.get(`/movie/${id}`);
+    console.log("Răspuns primit pentru detaliile filmului:", res.data);
+    
     if (res.status !== 200) {
       throw new Error("Eroare la preluarea detaliilor spectacolului");
     }
-    return res.data;
+    
+    if (!res.data) {
+      throw new Error("Nu s-au primit date pentru spectacol");
+    }
+    
+    // Verificăm dacă datele sunt în res.data.movie sau direct în res.data
+    const movieData = res.data.movie || res.data;
+    
+    if (!movieData.showTimes || !Array.isArray(movieData.showTimes)) {
+      console.error("Date invalide pentru showTimes:", movieData.showTimes);
+      throw new Error("Date invalide pentru timpii de spectare");
+    }
+    
+    return movieData;
   } catch (err) {
     console.error("Eroare la preluarea detaliilor spectacolului:", err);
     throw err;
@@ -104,7 +120,12 @@ export const sendUserAuthRequest = async (inputs, signup) => {
           };
         }
       } catch (adminErr) {
-        // Dacă autentificarea ca admin a eșuat, încercăm ca user
+        // Ignorăm eroarea de la admin login și continuăm cu user login
+        console.log("Autentificare ca admin eșuată, încercăm ca user");
+      }
+
+      // Încercăm autentificarea ca user
+      try {
         const userRes = await instance.post("/user/login", inputs);
         
         if (!userRes.data.token) {
@@ -115,13 +136,21 @@ export const sendUserAuthRequest = async (inputs, signup) => {
           ...userRes.data,
           role: "user",
         };
+      } catch (userErr) {
+        console.error("Eroare la autentificarea ca user:", userErr.response?.data || userErr.message);
+        
+        if (userErr.response?.data?.message) {
+          throw { message: userErr.response.data.message };
+        }
+
+        throw { message: "Email sau parolă incorecte" };
       }
     }
   } catch (err) {
-    console.error("Eroare la autentificare:", err.response?.data || err.message);
+    console.error("Eroare la autentificare:", err.message);
     
-    if (err.response?.data?.message) {
-      throw { message: err.response.data.message };
+    if (err.message) {
+      throw { message: err.message };
     }
 
     if (err.response?.data?.error?.code === 11000) {
@@ -310,25 +339,48 @@ export const cancelMovie = async (id) => {
   }
 };
 
-// Creează o rezervare
+// Creare rezervare nouă
 export const newBooking = async (data) => {
   try {
-    const res = await instance.post("/booking", {
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      throw new Error("Utilizatorul nu este autentificat");
+    }
+
+    console.log("Creating booking with data:", {
       movie: data.movie,
-      seatNumber: data.seatNumber,
+      seatNumbers: data.seatNumbers,
       date: data.date,
-      user: localStorage.getItem("userId"),
       showTimeId: data.showTimeId,
+      user: userId
     });
+
+    const res = await instance.post(
+      "/booking",
+      {
+        movie: data.movie,
+        seatNumbers: data.seatNumbers,
+        date: data.date,
+        showTimeId: data.showTimeId,
+        user: userId
+      },
+      {
+        headers: getAuthHeader(),
+      }
+    );
 
     if (res.status !== 201) {
       throw new Error("Eroare la crearea rezervării");
     }
 
+    if (!res.data.bookings || !Array.isArray(res.data.bookings)) {
+      throw new Error("Format de răspuns invalid de la server");
+    }
+
     return res.data;
   } catch (err) {
-    console.error("Eroare la crearea rezervării:", err);
-    throw err;
+    console.error("Eroare la crearea rezervării:", err.response?.data || err);
+    throw err.response?.data || { message: "Eroare la crearea rezervării" };
   }
 };
 

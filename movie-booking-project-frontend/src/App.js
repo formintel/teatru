@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Route, Routes } from "react-router-dom";
 import Admin from "./components/Auth/Admin";
 import Auth from "./components/Auth/Auth";
-import Booking from "./components/Bookings/Booking";
+import Booking from "./components/Booking/Booking";
 import Header from "./components/Header";
 import HomePage from "./components/HomePage";
 import Movies from "./components/Movies/Movies";
@@ -13,6 +13,7 @@ import AdminProfile from "./profile/AdminProfile";
 import UserProfile from "./profile/UserProfile";
 import { authActions } from "./store";
 import AdminMovieDetails from "./components/Movies/AdminMovieDetails";
+import PaymentPage from "./components/Booking/PaymentPage";
 
 function App() {
   const dispatch = useDispatch();
@@ -42,7 +43,9 @@ function App() {
           {isLoggedIn && userRole === "user" && (
             <>
               <Route path="/user" element={<UserProfile />} />
+              <Route path="/user-profile" element={<UserProfile />} />
               <Route path="/booking/:id" element={<Booking />} />
+              <Route path="/payment" element={<PaymentPage />} />
             </>
           )}
           {isLoggedIn && userRole === "admin" && (
@@ -51,6 +54,9 @@ function App() {
               <Route path="/user-admin" element={<AdminProfile />} />
             </>
           )}
+          {/* Rute publice care trebuie să fie accesibile oricând */}
+          <Route path="/movies" element={<Movies />} />
+          <Route path="/movies/:id" element={<AdminMovieDetails />} />
         </Routes>
       </section>
     </div>

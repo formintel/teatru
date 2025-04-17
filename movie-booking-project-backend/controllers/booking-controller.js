@@ -4,52 +4,101 @@ import Movie from "../models/Movie.js";
 import User from "../models/User.js";
 
 export const newBooking = async (req, res, next) => {
-  const { movie, date, seatNumber, user, showTimeId } = req.body; // Adaugă showTimeId aici
+  console.log("Request body pentru noua rezervare:", req.body);
+  
+  const { movie, date, seatNumbers, seatNumber, user, showTimeId } = req.body;
+
+  // Validare câmpuri obligatorii
+  if (!movie || !date || (!seatNumbers && !seatNumber) || !user || !showTimeId) {
+    console.log("Câmpuri lipsă:", { movie, date, seatNumbers, seatNumber, user, showTimeId });
+    return res.status(400).json({ 
+      message: "Toate câmpurile sunt obligatorii",
+      missing: {
+        movie: !movie,
+        date: !date,
+        seatNumbers: !seatNumbers && !seatNumber,
+        user: !user,
+        showTimeId: !showTimeId
+      }
+    });
+  }
+
+  // Convertim seatNumber în seatNumbers dacă este necesar
+  const seatsToBook = seatNumbers || [seatNumber];
 
   let existingMovie;
   let existingUser;
   try {
+    console.log("Căutăm filmul cu ID:", movie);
     existingMovie = await Movie.findById(movie);
+    console.log("Film găsit:", existingMovie ? "Da" : "Nu");
+    
+    console.log("Căutăm utilizatorul cu ID:", user);
     existingUser = await User.findById(user);
+    console.log("Utilizator găsit:", existingUser ? "Da" : "Nu");
   } catch (err) {
-    return console.log(err);
+    console.error("Eroare la căutarea filmului sau utilizatorului:", err);
+    return res.status(500).json({ 
+      message: "Eroare la validarea datelor",
+      error: err.message 
+    });
   }
 
   if (!existingMovie) {
-    return res.status(404).json({ message: "Movie Not Found With Given ID" });
+    console.error("Filmul nu a fost găsit cu ID:", movie);
+    return res.status(404).json({ 
+      message: "Filmul nu a fost găsit",
+      movieId: movie 
+    });
   }
-  if (!user) {
-    return res.status(404).json({ message: "User not found with given ID " });
+  if (!existingUser) {
+    console.error("Utilizatorul nu a fost găsit cu ID:", user);
+    return res.status(404).json({ 
+      message: "Utilizatorul nu a fost găsit",
+      userId: user 
+    });
   }
-  let booking;
 
   try {
-    booking = new Bookings({ // Asigură-te că folosești modelul corect
-      movie,
-      date: new Date(`${date}`),
-      seatNumber,
-      user,
-      showTimeId, // Adaugă showTimeId aici
-    });
+    console.log("Creăm rezervările pentru locurile:", seatsToBook);
+    
+    // Creăm o rezervare pentru fiecare loc
+    const bookings = await Promise.all(seatsToBook.map(async (seatNumber) => {
+      const booking = new Bookings({
+        movie,
+        date: new Date(date),
+        seatNumber,
+        user,
+        showTimeId
+      });
 
-    await booking.save();
+      await booking.save();
+      console.log(`Rezervare salvată cu succes pentru locul ${seatNumber}:`, booking._id);
 
-    existingUser.bookings.push(booking);
+      return booking;
+    }));
+
+    // Actualizăm utilizatorul cu toate rezervările
+    existingUser.bookings.push(...bookings);
     await existingUser.save();
+    console.log("Utilizator actualizat cu rezervările");
 
-    existingMovie.bookings.push(booking);
+    // Actualizăm filmul cu toate rezervările
+    existingMovie.bookings.push(...bookings);
     await existingMovie.save();
+    console.log("Film actualizat cu rezervările");
 
+    return res.status(201).json({ 
+      message: "Rezervări create cu succes",
+      bookings 
+    });
   } catch (err) {
-    console.log("Eroare la crearea rezervării:", err);
-    return res.status(500).json({ message: "Eroare la crearea rezervării" });
+    console.error("Eroare la crearea rezervărilor:", err);
+    return res.status(500).json({ 
+      message: "Eroare la crearea rezervărilor",
+      error: err.message 
+    });
   }
-
-  if (!booking) {
-    return res.status(500).json({ message: "Unable to create a booking" });
-  }
-
-  return res.status(201).json({ booking });
 };
 
 export const getBookingById = async (req, res, next) => {
