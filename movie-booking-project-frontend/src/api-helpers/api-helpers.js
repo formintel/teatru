@@ -69,30 +69,33 @@ export const getAllMovies = async (inCurs = false) => {
 // Preluare detalii spectacol
 export const getMovieDetails = async (id) => {
   try {
-    console.log("Încercăm să obținem detaliile filmului cu ID:", id);
     const res = await instance.get(`/movie/${id}`);
-    console.log("Răspuns primit pentru detaliile filmului:", res.data);
+    console.log("Răspuns brut de la backend:", res.data);
     
-    if (res.status !== 200) {
-      throw new Error("Eroare la preluarea detaliilor spectacolului");
-    }
-    
+    // Verificăm dacă răspunsul conține datele filmului
     if (!res.data) {
-      throw new Error("Nu s-au primit date pentru spectacol");
+      throw new Error("Nu s-au primit date de la server");
     }
-    
-    // Verificăm dacă datele sunt în res.data.movie sau direct în res.data
+
+    // Verificăm dacă avem un obiect movie în răspuns
     const movieData = res.data.movie || res.data;
-    
-    if (!movieData.showTimes || !Array.isArray(movieData.showTimes)) {
-      console.error("Date invalide pentru showTimes:", movieData.showTimes);
-      throw new Error("Date invalide pentru timpii de spectare");
+    if (!movieData) {
+      throw new Error("Nu s-au găsit date pentru film");
     }
-    
-    return movieData;
+
+    // Verificăm dacă avem showTimes
+    if (!movieData.showTimes || !Array.isArray(movieData.showTimes)) {
+      console.warn("Nu s-au găsit showTimes sau nu este un array:", movieData.showTimes);
+      movieData.showTimes = [];
+    }
+
+    // Returnăm datele în formatul așteptat
+    return {
+      movie: movieData
+    };
   } catch (err) {
-    console.error("Eroare la preluarea detaliilor spectacolului:", err);
-    throw err;
+    console.error("Eroare la preluarea detaliilor filmului:", err);
+    throw new Error(err.response?.data?.message || "Nu s-au putut încărca detaliile filmului");
   }
 };
 

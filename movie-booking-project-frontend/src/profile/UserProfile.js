@@ -1,191 +1,243 @@
-import React, { Fragment, useEffect, useState } from "react";
-import {
-  deleteBooking,
-  getUserBooking,
-  getUserDetails,
-} from "../api-helpers/api-helpers";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import LocalMoviesIcon from '@mui/icons-material/LocalMovies';
-import EventSeatIcon from '@mui/icons-material/EventSeat';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import { IconButton } from "@mui/material";
+import React, { useEffect, useState } from 'react';
+import { 
+  Box, 
+  Typography, 
+  Button, 
+  List, 
+  ListItem, 
+  IconButton, 
+  Dialog, 
+  DialogTitle, 
+  DialogContent, 
+  DialogActions,
+  DialogContentText,
+  Snackbar,
+  Alert
+} from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { getUserBooking, deleteBooking } from '../api-helpers/api-helpers';
+import { useNavigate } from 'react-router-dom';
+import Ticket from '../components/Booking/Ticket';
 
 const UserProfile = () => {
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
-  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [bookingsRes, userRes] = await Promise.all([
-          getUserBooking(),
-          getUserDetails()
-        ]);
-        
-        if (bookingsRes.bookings) {
-          setBookings(bookingsRes.bookings);
-        }
-        
-        if (userRes.user) {
-          setUser(userRes.user);
-        }
-      } catch (err) {
-        console.error("Eroare la preluarea datelor:", err);
-        setError("Nu s-au putut prelua datele. Te rugăm să încerci din nou.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const [error, setError] = useState('');
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
+  const [ticketToDelete, setTicketToDelete] = useState(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-    fetchData();
-  }, []);
-  
-  const handleDelete = async (id) => {
+  useEffect(() => {
+    // Verificăm dacă utilizatorul este autentificat
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      navigate("/auth");
+      return;
+    }
+    fetchBookings();
+  }, [navigate]);
+
+  const fetchBookings = async () => {
     try {
-      await deleteBooking(id);
-      setBookings(prevBookings => prevBookings.filter(booking => booking._id !== id));
+      const response = await getUserBooking();
+      if (response?.bookings) {
+        // Filtrăm rezervările invalide
+        const validBookings = response.bookings.filter(
+          booking => booking && booking.movie && booking.movie.title
+        );
+        setBookings(validBookings);
+      } else {
+        setBookings([]);
+      }
     } catch (err) {
-      console.error("Eroare la ștergerea rezervării:", err);
-      setError("Nu s-a putut șterge rezervarea. Te rugăm să încerci din nou.");
+      setError('Nu s-au putut încărca rezervările.');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
-  
+
+  const handleDeleteClick = (booking) => {
+    setTicketToDelete(booking);
+    setDeleteConfirmDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await deleteBooking(ticketToDelete._id);
+      setDeleteConfirmDialog(false);
+      setShowSuccessMessage(true);
+      fetchBookings();
+    } catch (err) {
+      setError('Nu s-a putut șterge rezervarea.');
+      console.error(err);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmDialog(false);
+    setTicketToDelete(null);
+  };
+
+  const handleOpenTicket = (booking) => {
+    if (booking && booking.movie) {
+      setSelectedTicket(booking);
+      setOpenDialog(true);
+    }
+  };
+
+  const handleCloseTicket = () => {
+    setOpenDialog(false);
+    setSelectedTicket(null);
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Se încarcă datele...</p>
-        </div>
-      </div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+        <Typography>Se încarcă rezervările...</Typography>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center text-red-600">
-          <p>{error}</p>
-        </div>
-      </div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+        <Typography color="error">{error}</Typography>
+      </Box>
     );
   }
-  
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header Banner */}
-      <div className="h-48 bg-gradient-to-r from-purple-400 to-indigo-500"></div>
-      
-      <div className="container mx-auto px-4 -mt-24">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Profil Utilizator */}
-          {user && (
-            <div className="w-full md:w-1/3 bg-white rounded-xl shadow-lg p-6 mb-6 md:mb-0">
-              <div className="flex flex-col items-center">
-                <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-md">
-                  <AccountCircleIcon className="text-gray-400" style={{ fontSize: "5rem" }} />
-                </div>
-                
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">{user.name}</h2>
-                
-                <div className="w-full space-y-4">
-                  <div className="bg-gray-50 rounded-lg p-4 flex items-center">
-                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center mr-3">
-                      <span className="text-emerald-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-                        </svg>
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Nume</p>
-                      <p className="font-medium">{user.name}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gray-50 rounded-lg p-4 flex items-center">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                      <span className="text-blue-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                          <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                        </svg>
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Email</p>
-                      <p className="font-medium">{user.email}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+    <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+      <Typography variant="h4" sx={{ mb: 4 }}>
+        Rezervările mele
+      </Typography>
+
+      {(!bookings || bookings.length === 0) ? (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Nu aveți rezervări active
+          </Typography>
+          <Button 
+            variant="contained" 
+            onClick={() => navigate('/movies')}
+          >
+            Vezi spectacolele disponibile
+          </Button>
+        </Box>
+      ) : (
+        <List>
+          {bookings.map((booking) => (
+            booking && booking.movie && (
+              <ListItem 
+                key={booking._id}
+                sx={{ 
+                  mb: 2, 
+                  display: 'flex', 
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  bgcolor: 'background.paper',
+                  borderRadius: 1,
+                  boxShadow: 1,
+                  p: 2
+                }}
+              >
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="h6">
+                    {booking.movie.title}
+                  </Typography>
+                  <Typography variant="body1">
+                    Data: {new Date(booking.date).toLocaleDateString('ro-RO')}
+                  </Typography>
+                  <Typography variant="body2">
+                    Loc: {booking.seatNumber}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Button
+                    variant="outlined"
+                    sx={{ mr: 1 }}
+                    onClick={() => handleOpenTicket(booking)}
+                  >
+                    Vezi biletul
+                  </Button>
+                  <IconButton 
+                    onClick={() => handleDeleteClick(booking)}
+                    color="error"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              </ListItem>
+            )
+          ))}
+        </List>
+      )}
+
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseTicket}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Biletul dumneavoastră
+        </DialogTitle>
+        <DialogContent>
+          {selectedTicket && selectedTicket.movie && (
+            <Ticket
+              movie={selectedTicket.movie}
+              seat={selectedTicket.seatNumber}
+              showTime={{ date: selectedTicket.date }}
+              price={selectedTicket.movie.pret}
+            />
           )}
-          
-          {/* Rezervări */}
-          <div className="w-full md:w-2/3">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200">
-                Rezervările mele
-              </h3>
-              
-              {bookings && bookings.length > 0 ? (
-                <div className="space-y-4">
-                  {bookings.map((booking, index) => (
-                    <div 
-                      key={index} 
-                      className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition duration-300 overflow-hidden"
-                    >
-                      <div className="flex items-center justify-between p-4">
-                        <div className="flex-1">
-                          <div className="flex items-center mb-3">
-                            <LocalMoviesIcon className="text-emerald-500 mr-2" />
-                            <h4 className="text-lg font-semibold text-gray-800">
-                              {booking.movie?.title || "Spectacol indisponibil"}
-                            </h4>
-                          </div>
-                          
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                            <div className="flex items-center text-gray-600">
-                              <EventSeatIcon className="h-4 w-4 mr-1 text-gray-400" />
-                              <span>Loc: {booking.seatNumber}</span>
-                            </div>
-                            
-                            <div className="flex items-center text-gray-600">
-                              <CalendarTodayIcon className="h-4 w-4 mr-1 text-gray-400" />
-                              <span>{new Date(booking.date).toLocaleDateString('ro-RO', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric'
-                              })}</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <IconButton 
-                          onClick={() => handleDelete(booking._id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <DeleteForeverIcon />
-                        </IconButton>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Nu ai nicio rezervare.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseTicket}>Închide</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={deleteConfirmDialog}
+        onClose={handleDeleteCancel}
+      >
+        <DialogTitle>
+          Confirmați anularea rezervării
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Sunteți sigur că doriți să anulați această rezervare? 
+            Suma de {ticketToDelete?.movie?.pret} RON va fi returnată în contul dumneavoastră în 3-5 zile lucrătoare.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel}>Anulează</Button>
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+            Confirmă anularea
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar 
+        open={showSuccessMessage} 
+        autoHideDuration={6000} 
+        onClose={() => setShowSuccessMessage(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={() => setShowSuccessMessage(false)} 
+          severity="success" 
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          Rezervarea a fost anulată cu succes. Suma va fi returnată în contul dumneavoastră în 3-5 zile lucrătoare.
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 };
 

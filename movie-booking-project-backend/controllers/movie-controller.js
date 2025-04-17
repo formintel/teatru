@@ -125,15 +125,37 @@ export const getAllMovies = async (req, res, next) => {
 
 export const getMovieById = async (req, res, next) => {
   const id = req.params.id;
+  console.log("Încercăm să obținem filmul cu ID:", id);
+  
   let movie;
   try {
     movie = await Movie.findById(id);
+    console.log("Film găsit:", movie ? "Da" : "Nu");
   } catch (err) {
-    return console.log(err);
+    console.error("Eroare la căutarea filmului:", err);
+    return res.status(500).json({ message: "Eroare la căutarea filmului", error: err.message });
   }
 
   if (!movie) {
-    return res.status(404).json({ message: "Invalid Movie ID" });
+    console.error("Filmul nu a fost găsit cu ID:", id);
+    return res.status(404).json({ message: "Filmul nu a fost găsit" });
+  }
+
+  // Verificăm dacă toate câmpurile necesare există
+  const requiredFields = ['title', 'description', 'posterUrl', 'sala', 'numarLocuri', 'pret', 'regizor', 'durata', 'gen'];
+  const missingFields = requiredFields.filter(field => !movie[field]);
+  
+  if (missingFields.length > 0) {
+    console.error("Câmpuri lipsă în film:", missingFields);
+    return res.status(500).json({ 
+      message: "Date incomplete pentru film", 
+      missingFields: missingFields 
+    });
+  }
+
+  // Asigurăm că showTimes există și este un array
+  if (!movie.showTimes || !Array.isArray(movie.showTimes)) {
+    movie.showTimes = [];
   }
 
   return res.status(200).json({ movie });

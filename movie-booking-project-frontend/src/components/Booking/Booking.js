@@ -20,15 +20,30 @@ const Booking = () => {
         console.log("Încercăm să obținem detaliile filmului cu ID:", id);
         const data = await getMovieDetails(id);
         console.log("Date primite pentru film:", data);
+        
+        if (!data) {
+          throw new Error("Nu s-au primit date pentru spectacol");
+        }
+        
+        // Verificăm dacă toate câmpurile necesare există
+        const requiredFields = ['title', 'description', 'posterUrl', 'sala', 'numarLocuri', 'pret', 'regizor', 'durata', 'gen'];
+        const missingFields = requiredFields.filter(field => !data[field]);
+        
+        if (missingFields.length > 0) {
+          throw new Error(`Date incomplete pentru spectacol. Câmpuri lipsă: ${missingFields.join(', ')}`);
+        }
+        
         setMovie(data);
       } catch (err) {
         console.error("Eroare la încărcarea detaliilor spectacolului:", err);
-        setError('Nu s-au putut încărca detaliile spectacolului');
+        setError(err.message || 'Nu s-au putut încărca detaliile spectacolului');
       }
     };
 
     if (id) {
       fetchMovieDetails();
+    } else {
+      setError('ID-ul spectacolului nu a fost specificat');
     }
   }, [id]);
 

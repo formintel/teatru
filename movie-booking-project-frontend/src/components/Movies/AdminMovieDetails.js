@@ -22,19 +22,33 @@ const AdminMovieDetails = () => {
     setLoading(true);
     getMovieDetails(id)
       .then((res) => {
-        console.log("Date complete primite de la backend:", res);
-        console.log("ShowTimes din backend:", res.movie.showTimes);
-        setMovie(res.movie);
+        console.log("Răspuns de la getMovieDetails:", res);
+        
+        if (!res || !res.movie) {
+          throw new Error("Nu s-au primit date pentru spectacol");
+        }
+
+        const movieData = res.movie;
+        console.log("Date film:", movieData);
+        
+        // Verificăm dacă avem showTimes
+        if (!movieData.showTimes || !Array.isArray(movieData.showTimes)) {
+          console.warn("Nu s-au găsit showTimes, se setează array gol");
+          movieData.showTimes = [];
+        }
+
+        setMovie(movieData);
+        
         if (isLoggedIn) {
           getUserRating(id, userId)
             .then(rating => setUserRating(rating))
-            .catch(err => console.log(err));
+            .catch(err => console.error("Eroare la preluarea rating-ului:", err));
         }
         setLoading(false);
       })
       .catch((err) => {
-        console.log(err);
-        setError("Nu s-a putut încărca spectacolul.");
+        console.error("Eroare la încărcarea detaliilor spectacolului:", err);
+        setError(err.message || "Nu s-a putut încărca spectacolul.");
         setLoading(false);
       });
   }, [id, userId, isLoggedIn]);
@@ -171,40 +185,44 @@ const AdminMovieDetails = () => {
                       Reprezentații
                     </Typography>
                     <Box sx={{ mt: 2 }}>
-                      {movie.showTimes.map((showTime, index) => {
-                        console.log("ShowTime procesat:", showTime);
-                        console.log("Tipul datei:", typeof showTime.date);
-                        console.log("Valoarea datei:", showTime.date);
-                        
-                        let formattedDate = "Data indisponibilă";
-                        
-                        try {
-                          if (showTime.date) {
-                            // Verificăm dacă data este deja un obiect Date
-                            const date = showTime.date instanceof Date ? showTime.date : new Date(showTime.date);
-                            console.log("Data convertită:", date);
-                            
-                            if (!isNaN(date.getTime())) {
-                              formattedDate = format(date, "EEEE, d MMMM yyyy, HH:mm", { locale: ro });
-                              console.log("Data formatată:", formattedDate);
+                      {movie.showTimes && movie.showTimes.length > 0 ? (
+                        movie.showTimes.map((showTime, index) => {
+                          console.log("ShowTime procesat:", showTime);
+                          console.log("Tipul datei:", typeof showTime.date);
+                          console.log("Valoarea datei:", showTime.date);
+                          
+                          let formattedDate = "Data indisponibilă";
+                          
+                          try {
+                            if (showTime.date) {
+                              // Verificăm dacă data este deja un obiect Date
+                              const date = showTime.date instanceof Date ? showTime.date : new Date(showTime.date);
+                              console.log("Data convertită:", date);
+                              
+                              if (!isNaN(date.getTime())) {
+                                formattedDate = format(date, "EEEE, d MMMM yyyy, HH:mm", { locale: ro });
+                                console.log("Data formatată:", formattedDate);
+                              } else {
+                                console.log("Data invalidă:", date);
+                              }
                             } else {
-                              console.log("Data invalidă:", date);
+                              console.log("Nu există câmpul date în showTime");
                             }
-                          } else {
-                            console.log("Nu există câmpul date în showTime");
+                          } catch (error) {
+                            console.error("Eroare la formatarea datei:", error);
+                            console.error("ShowTime care a cauzat eroarea:", showTime);
                           }
-                        } catch (error) {
-                          console.error("Eroare la formatarea datei:", error);
-                          console.error("ShowTime care a cauzat eroarea:", showTime);
-                        }
 
-                        return (
-                          <div key={index} className="bg-white p-4 rounded-lg shadow">
-                            <p className="text-gray-800 font-medium">{formattedDate}</p>
-                            <p className="text-gray-600">Locuri disponibile: {showTime.availableSeats}</p>
-                          </div>
-                        );
-                      })}
+                          return (
+                            <div key={index} className="bg-white p-4 rounded-lg shadow">
+                              <p className="text-gray-800 font-medium">{formattedDate}</p>
+                              <p className="text-gray-600">Locuri disponibile: {showTime.availableSeats}</p>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <Typography color="text.secondary">Nu există reprezentații programate</Typography>
+                      )}
                     </Box>
                   </Grid>
                 </Grid>
