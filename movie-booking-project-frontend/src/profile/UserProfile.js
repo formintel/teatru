@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { 
+import {
   Box, 
   Typography, 
   Button, 
@@ -29,7 +29,7 @@ const UserProfile = () => {
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
   const [ticketToDelete, setTicketToDelete] = useState(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-
+  
   useEffect(() => {
     // Verificăm dacă utilizatorul este autentificat
     const userId = localStorage.getItem("userId");

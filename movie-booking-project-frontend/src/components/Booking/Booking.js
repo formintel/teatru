@@ -3,6 +3,7 @@ import { Box, Typography, Button, Grid, Paper, Alert } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getMovieDetails, getOccupiedSeats, newBooking } from '../../api-helpers/api-helpers';
 import { theaterConfig } from '../../config/theater-config';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const Booking = () => {
   const navigate = useNavigate();
@@ -17,26 +18,50 @@ const Booking = () => {
   useEffect(() => {
     const fetchMovieDetails = async () => {
       try {
-        console.log("Încercăm să obținem detaliile filmului cu ID:", id);
-        const data = await getMovieDetails(id);
-        console.log("Date primite pentru film:", data);
-        
-        if (!data) {
+        setLoading(true);
+        const response = await getMovieDetails(id);
+        console.log("Răspuns de la getMovieDetails în Booking:", response);
+
+        if (!response || !response.movie) {
           throw new Error("Nu s-au primit date pentru spectacol");
         }
-        
-        // Verificăm dacă toate câmpurile necesare există
-        const requiredFields = ['title', 'description', 'posterUrl', 'sala', 'numarLocuri', 'pret', 'regizor', 'durata', 'gen'];
-        const missingFields = requiredFields.filter(field => !data[field]);
-        
-        if (missingFields.length > 0) {
-          throw new Error(`Date incomplete pentru spectacol. Câmpuri lipsă: ${missingFields.join(', ')}`);
+
+        const movieData = response.movie;
+
+        // Verificăm și setăm valorile implicite pentru câmpurile lipsă
+        const defaultValues = {
+          title: "Titlu necunoscut",
+          description: "Descriere indisponibilă",
+          posterUrl: "/default-poster.jpg",
+          sala: "Sala necunoscută",
+          numarLocuri: 0,
+          pret: 0,
+          regizor: "Regizor necunoscut",
+          durata: 0,
+          gen: "Gen necunoscut",
+          showTimes: []
+        };
+
+        // Setăm valorile implicite pentru câmpurile lipsă
+        Object.keys(defaultValues).forEach(field => {
+          if (!movieData[field]) {
+            console.warn(`Câmpul ${field} lipsește, se setează valoarea implicită:`, defaultValues[field]);
+            movieData[field] = defaultValues[field];
+          }
+        });
+
+        // Verificăm dacă avem showTimes
+        if (!movieData.showTimes || !Array.isArray(movieData.showTimes)) {
+          console.warn("Nu s-au găsit showTimes, se setează array gol");
+          movieData.showTimes = [];
         }
-        
-        setMovie(data);
-      } catch (err) {
-        console.error("Eroare la încărcarea detaliilor spectacolului:", err);
-        setError(err.message || 'Nu s-au putut încărca detaliile spectacolului');
+
+        setMovie(movieData);
+        setLoading(false);
+      } catch (error) {
+        console.error("Eroare la încărcarea detaliilor spectacolului:", error);
+        setError(error.message || "Nu s-a putut încărca spectacolul.");
+        setLoading(false);
       }
     };
 
@@ -79,34 +104,26 @@ const Booking = () => {
     setSelectedSeats([]);
   };
 
-  const handleBooking = async () => {
-    if (selectedSeats.length === 0) {
-      setError('Vă rugăm să selectați cel puțin un loc');
+  const handleBooking = () => {
+    if (!selectedSeats.length) {
+      alert("Vă rugăm să selectați cel puțin un loc!");
       return;
     }
 
     if (!showTime) {
-      setError('Vă rugăm să selectați o reprezentație');
+      alert("Vă rugăm să selectați o reprezentație!");
       return;
     }
 
-    try {
-      const totalPrice = selectedSeats.reduce((total, seatNumber) => {
-        const seatInfo = theaterConfig.getSeatInfo(seatNumber);
-        return total + (movie.pret * seatInfo.priceMultiplier);
-      }, 0);
+    const bookingData = {
+      movie: movie,
+      selectedSeats,
+      showTimeId: showTime._id,
+      date: showTime.date
+    };
 
-      navigate('/payment', {
-        state: {
-          movie,
-          selectedSeats,
-          showTimeId: showTime._id,
-          totalPrice
-        }
-      });
-    } catch (err) {
-      setError('A apărut o eroare la procesarea rezervării');
-    }
+    console.log("Date pentru rezervare:", bookingData);
+    navigate("/payment", { state: bookingData });
   };
 
   const renderSeats = () => {
@@ -169,6 +186,14 @@ const Booking = () => {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+      <Button
+        startIcon={<ArrowBackIcon />}
+        onClick={() => navigate(-1)}
+        sx={{ mb: 2 }}
+      >
+        Înapoi
+      </Button>
+
       <Typography variant="h4" gutterBottom>
         Rezervare: {movie.title}
       </Typography>

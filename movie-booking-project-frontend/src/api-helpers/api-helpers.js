@@ -13,12 +13,12 @@ const instance = axios.create({
 // Interceptor pentru request-uri
 instance.interceptors.request.use(
   (config) => {
-    console.log("Request config:", {
-      url: config.url,
-      method: config.method,
-      data: config.data,
-      headers: config.headers
-    });
+    const token = localStorage.getItem("token");
+    if (token) {
+      // Asigură-te că token-ul este trimis corect
+      config.headers.Authorization = `Bearer ${token.trim()}`;
+      console.log("Token trimis în request:", config.headers.Authorization);
+    }
     return config;
   },
   (error) => {
@@ -30,17 +30,14 @@ instance.interceptors.request.use(
 // Interceptor pentru response-uri
 instance.interceptors.response.use(
   (response) => {
-    console.log("Response received:", {
-      status: response.status,
-      data: response.data
-    });
     return response;
   },
   (error) => {
     console.error("Response error:", {
       message: error.message,
       response: error.response?.data,
-      status: error.response?.status
+      status: error.response?.status,
+      headers: error.response?.headers
     });
     return Promise.reject(error);
   }
@@ -69,10 +66,15 @@ export const getAllMovies = async (inCurs = false) => {
 // Preluare detalii spectacol
 export const getMovieDetails = async (id) => {
   try {
+    console.log("Încercăm să obținem detaliile filmului cu ID:", id);
     const res = await instance.get(`/movie/${id}`);
-    console.log("Răspuns brut de la backend:", res.data);
+    console.log("Răspuns primit pentru detaliile filmului:", res.data);
     
-    // Verificăm dacă răspunsul conține datele filmului
+    if (res.status !== 200) {
+      throw new Error("Eroare la preluarea detaliilor spectacolului");
+    }
+
+    // Verificăm dacă avem date în răspuns
     if (!res.data) {
       throw new Error("Nu s-au primit date de la server");
     }
@@ -83,19 +85,48 @@ export const getMovieDetails = async (id) => {
       throw new Error("Nu s-au găsit date pentru film");
     }
 
-    // Verificăm dacă avem showTimes
+    // Verificăm dacă showTimes există și este un array
     if (!movieData.showTimes || !Array.isArray(movieData.showTimes)) {
-      console.warn("Nu s-au găsit showTimes sau nu este un array:", movieData.showTimes);
-      movieData.showTimes = [];
+      console.warn("Date invalide pentru showTimes:", movieData.showTimes);
+      movieData.showTimes = []; // Setăm un array gol dacă nu există showTimes
     }
 
+    // Verificăm câmpurile necesare și le setăm valori implicite dacă lipsesc
+    const requiredFields = {
+      title: "Titlu necunoscut",
+      description: "Descriere indisponibilă",
+      posterUrl: "/default-poster.jpg",
+      sala: "Sala necunoscută",
+      numarLocuri: 0,
+      pret: 0,
+      regizor: "Regizor necunoscut",
+      durata: 0,
+      gen: "Gen necunoscut"
+    };
+
+    // Setăm valorile implicite pentru câmpurile lipsă
+    Object.keys(requiredFields).forEach(field => {
+      if (!movieData[field]) {
+        console.warn(`Câmpul ${field} lipsește, se setează valoarea implicită:`, requiredFields[field]);
+        movieData[field] = requiredFields[field];
+      }
+    });
+
+    // Verificăm dacă avem actori
+    if (!movieData.actors || !Array.isArray(movieData.actors)) {
+      console.warn("Date invalide pentru actori:", movieData.actors);
+      movieData.actors = [];
+    }
+
+    console.log("Date procesate pentru spectacol:", movieData);
+    
     // Returnăm datele în formatul așteptat
     return {
       movie: movieData
     };
   } catch (err) {
-    console.error("Eroare la preluarea detaliilor filmului:", err);
-    throw new Error(err.response?.data?.message || "Nu s-au putut încărca detaliile filmului");
+    console.error("Eroare la preluarea detaliilor spectacolului:", err);
+    throw new Error(err.response?.data?.message || "Nu s-au putut încărca detaliile spectacolului");
   }
 };
 
@@ -186,6 +217,18 @@ export const sendAdminAuthRequest = async (data) => {
       console.error("Nu s-a primit token în răspuns:", res.data);
       throw new Error("Nu s-a putut obține token-ul de autentificare");
     }
+
+    // Salvăm token-ul și datele adminului
+    const token = res.data.token;
+    console.log("Token primit:", token);
+    
+    localStorage.setItem("token", token);
+    localStorage.setItem("userId", res.data.admin._id);
+    localStorage.setItem("role", "admin");
+    
+    // Verificăm dacă token-ul a fost salvat corect
+    const savedToken = localStorage.getItem("token");
+    console.log("Token salvat:", savedToken);
     
     return {
       ...res.data,
@@ -260,44 +303,37 @@ export const updateMovie = async (id, data) => {
   try {
     const token = localStorage.getItem("token");
     if (!token) {
-      throw new Error("Token not found");
+      throw new Error("Nu sunteți autentificat. Vă rugăm să vă autentificați din nou.");
     }
 
-    console.log("Date trimise către backend:", data);
-
-    // Pregătim datele pentru actualizare
-    const updateData = {
-      title: data.title,
-      description: data.description,
-      posterUrl: data.posterUrl,
-      pret: data.pret,
-      gen: data.gen,
-      regizor: data.regizor,
-      durata: data.durata,
-      sala: data.sala,
-      numarLocuri: data.numarLocuri,
-      actors: data.actors,
-      showTimes: data.showTimes.map(showTime => ({
-        _id: showTime._id,
-        date: new Date(showTime.date).toISOString(),
-        availableSeats: showTime.availableSeats || data.numarLocuri
-      }))
-    };
-
-    console.log("Date procesate pentru actualizare:", updateData);
+    console.log("Încercăm să actualizăm filmul cu ID:", id);
+    console.log("Token folosit:", token);
 
     const response = await instance.put(
       `/movie/${id}`,
-      updateData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      data
     );
+
+    if (response.status !== 200) {
+      throw new Error("Eroare la actualizarea spectacolului");
+    }
+
     return response.data;
   } catch (err) {
-    console.error("Eroare la actualizarea spectacolului:", err);
+    console.error("Eroare la actualizarea spectacolului:", {
+      error: err,
+      response: err.response,
+      data: err.response?.data,
+      status: err.response?.status,
+      headers: err.response?.headers
+    });
+    
+    if (err.response?.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("role");
+      throw new Error("Sesiunea a expirat. Vă rugăm să vă autentificați din nou.");
+    }
     throw err;
   }
 };

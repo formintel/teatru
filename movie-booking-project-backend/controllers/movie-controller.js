@@ -11,9 +11,10 @@ export const addMovie = async (req, res, next) => {
 
   let adminId;
   try {
-    const decrypted = jwt.verify(extractedToken, process.env.SECRET_KEY);
+    const decrypted = jwt.verify(extractedToken, process.env.JWT_SECRET);
     adminId = decrypted.id;
   } catch (err) {
+    console.log("Token verification failed:", err);
     return res.status(401).json({ message: "Invalid Token" });
   }
 
@@ -174,7 +175,7 @@ export const updateMovie = async (req, res, next) => {
 
   let adminId;
   try {
-    const decrypted = jwt.verify(extractedToken, process.env.SECRET_KEY);
+    const decrypted = jwt.verify(extractedToken, process.env.JWT_SECRET);
     adminId = decrypted.id;
     console.log("Admin ID from token:", adminId);
   } catch (err) {
@@ -280,7 +281,7 @@ export const deleteMovie = async (req, res, next) => {
 
   let adminId;
   try {
-    const decrypted = jwt.verify(extractedToken, process.env.SECRET_KEY);
+    const decrypted = jwt.verify(extractedToken, process.env.JWT_SECRET);
     adminId = decrypted.id;
     console.log("Admin ID from token:", adminId);
   } catch (err) {

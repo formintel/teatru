@@ -37,6 +37,14 @@ const AdminMovieDetails = () => {
           movieData.showTimes = [];
         }
 
+        // Verificăm câmpurile necesare
+        const requiredFields = ['title', 'description', 'posterUrl', 'sala', 'numarLocuri', 'pret', 'regizor', 'durata', 'gen'];
+        const missingFields = requiredFields.filter(field => !movieData[field]);
+        
+        if (missingFields.length > 0) {
+          console.warn("Câmpuri lipsă în datele spectacolului:", missingFields);
+        }
+
         setMovie(movieData);
         
         if (isLoggedIn) {
@@ -71,6 +79,15 @@ const AdminMovieDetails = () => {
       console.log(err);
       alert("Eroare la adăugarea rating-ului!");
     }
+  };
+
+  const handleBooking = () => {
+    if (!isLoggedIn) {
+      alert("Trebuie să fii autentificat pentru a face o rezervare!");
+      navigate("/auth");
+      return;
+    }
+    navigate(`/booking/${id}`);
   };
 
   if (loading) {
@@ -195,7 +212,6 @@ const AdminMovieDetails = () => {
                           
                           try {
                             if (showTime.date) {
-                              // Verificăm dacă data este deja un obiect Date
                               const date = showTime.date instanceof Date ? showTime.date : new Date(showTime.date);
                               console.log("Data convertită:", date);
                               
@@ -223,6 +239,17 @@ const AdminMovieDetails = () => {
                       ) : (
                         <Typography color="text.secondary">Nu există reprezentații programate</Typography>
                       )}
+                    </Box>
+
+                    <Box sx={{ mt: 4 }}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                        onClick={handleBooking}
+                      >
+                        Rezervă bilete
+                      </Button>
                     </Box>
                   </Grid>
                 </Grid>
