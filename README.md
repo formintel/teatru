@@ -81,7 +81,7 @@ Baza de date conține următoarele colecții:
 Pagina principală a aplicației oferă o experiență modernă și atractivă pentru vizitatori, cu următoarele elemente:
 
 #### Hero Section
-![Hero Section](./screenshots/hero-section.png)
+![Hero Section](./screenshots/homepage/hero-section.png)
 - Imagine de fundal cu gradient dinamic
 - Logo-ul teatrului (DramArena)
 - Titlu principal și slogan
@@ -90,7 +90,7 @@ Pagina principală a aplicației oferă o experiență modernă și atractivă p
   - Accesarea panoului de administrare (pentru admini)
 
 #### Carousel de Spectacole
-![Carousel de Spectacole](./screenshots/carousel.png)
+![Carousel de Spectacole](./screenshots/homepage/carousel.png)
 - Afișare automată a spectacolelor în curs
 - Design responsive (1-3 spectacole pe rând, în funcție de dimensiunea ecranului)
 - Pentru fiecare spectacol se afișează:
@@ -105,14 +105,14 @@ Pagina principală a aplicației oferă o experiență modernă și atractivă p
   - Buton pentru detalii
 
 #### Secțiunea de Caracteristici
-![Secțiunea de Caracteristici](./screenshots/features.png)
+![Secțiunea de Caracteristici](./screenshots/homepage/features.png)
 - Trei card-uri care evidențiază avantajele platformei:
   - Spectacole Diverse
   - Rezervare Ușoară
   - Bilete Digitale
 
 #### Harta de Localizare
-![Harta de Localizare](./screenshots/map.png)
+![Harta de Localizare](./screenshots/homepage/map.png)
 - Integrare cu Leaflet pentru afișarea locației teatrului
 - Harta interactivă pentru ghidare
 
