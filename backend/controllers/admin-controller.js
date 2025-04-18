@@ -127,34 +127,120 @@ export const getAdminBookings = async (req, res, next) => {
 };
 
 export const getAdminStatistics = async (req, res, next) => {
-  const adminId = req.params.id;
-  
   try {
-    const admin = await Admin.findById(adminId);
+    // 1. Statistici pentru distribuția spectacolelor pe genuri
+    const genreStats = await Movie.aggregate([
+      {
+        $group: {
+          _id: "$gen",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // 2. Statistici pentru gradul de ocupare al sălilor
+    const movies = await Movie.find();
+    const bookings = await Bookings.find();
     
-    if (!admin) {
-      return res.status(404).json({ message: "Admin not found" });
-    }
-    
-    // Calculează statisticile
-    const totalBookings = admin.bookings.length;
-    const totalMovies = admin.addedMovies.length;
-    
-    // Calculează venitul total din bookings
-    const bookings = await Bookings.find({ _id: { $in: admin.bookings } });
-    const totalRevenue = bookings.reduce((sum, booking) => sum + (booking.totalAmount || 0), 0);
-    
-    // Actualizează statisticile în baza de date
-    admin.statistics = {
-      totalBookings,
-      totalRevenue,
-      totalMovies
+    const occupancyStats = {
+      totalSeats: movies.reduce((sum, movie) => sum + movie.numarLocuri, 0),
+      bookedSeats: bookings.length,
     };
-    await admin.save();
     
-    return res.status(200).json({ statistics: admin.statistics });
+    // 3. Distribuția rezervărilor pe zile ale săptămânii
+    const weekdayStats = await Bookings.aggregate([
+      {
+        $group: {
+          _id: { $dayOfWeek: "$date" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // 4. Top cele mai populare spectacole
+    const popularMovies = await Movie.aggregate([
+      {
+        $lookup: {
+          from: "bookings",
+          localField: "_id",
+          foreignField: "movie",
+          as: "bookings"
+        }
+      },
+      {
+        $project: {
+          title: 1,
+          bookingsCount: { $size: "$bookings" }
+        }
+      },
+      {
+        $sort: { bookingsCount: -1 }
+      },
+      {
+        $limit: 5
+      }
+    ]);
+
+    // 5. Statistici generale
+    const totalMovies = await Movie.countDocuments();
+    const totalBookings = await Bookings.countDocuments();
+    const totalUsers = await User.countDocuments();
+    const totalRevenue = await Bookings.aggregate([
+      {
+        $lookup: {
+          from: "movies",
+          localField: "movie",
+          foreignField: "_id",
+          as: "movieDetails"
+        }
+      },
+      {
+        $unwind: "$movieDetails"
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$movieDetails.pret" }
+        }
+      }
+    ]);
+
+    // Convertim zilele săptămânii în format românesc
+    const weekdayNames = {
+      1: "Duminică",
+      2: "Luni",
+      3: "Marți",
+      4: "Miercuri",
+      5: "Joi",
+      6: "Vineri",
+      7: "Sâmbătă"
+    };
+
+    const formattedWeekdayStats = weekdayStats.map(stat => ({
+      day: weekdayNames[stat._id],
+      count: stat.count
+    }));
+
+    return res.status(200).json({
+      statistics: {
+        genreDistribution: genreStats,
+        occupancyRate: {
+          total: occupancyStats.totalSeats,
+          booked: occupancyStats.bookedSeats,
+          percentage: ((occupancyStats.bookedSeats / occupancyStats.totalSeats) * 100).toFixed(2)
+        },
+        weekdayDistribution: formattedWeekdayStats,
+        popularMovies: popularMovies,
+        general: {
+          totalMovies,
+          totalBookings,
+          totalUsers,
+          totalRevenue: totalRevenue[0]?.total || 0
+        }
+      }
+    });
   } catch (err) {
-    console.error("Error fetching admin statistics:", err);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Error fetching statistics:", err);
+    return res.status(500).json({ message: "Eroare la preluarea statisticilor" });
   }
 };

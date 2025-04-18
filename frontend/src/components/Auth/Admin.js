@@ -1,30 +1,44 @@
 // components/Admin.js
-import React, { useState } from "react";
-import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useLocation } from "react-router-dom";
 import { sendAdminAuthRequest } from "../../api-helpers/api-helpers";
 import { authActions } from "../../store";
 import AuthForm from "./AuthForm";
 
 const Admin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const [error, setError] = useState("");
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  const userRole = useSelector((state) => state.auth.role);
+
+  useEffect(() => {
+    // Dacă utilizatorul este deja autentificat ca admin, redirecționăm către panoul de admin
+    if (isLoggedIn && userRole === "admin") {
+      navigate("/admin");
+    }
+    // Dacă utilizatorul este autentificat ca user normal, redirecționăm către home
+    else if (isLoggedIn && userRole === "user") {
+      navigate("/");
+    }
+  }, [isLoggedIn, userRole, navigate]);
 
   const onResReceived = (data) => {
     console.log("Răspuns primit de la server pentru admin:", data);
-    if (data.id && data.token) {
+    if (data.id && data.token && data.role === "admin") {
       dispatch(authActions.login({
         userId: data.id,
-        role: data.role, // Setează rolul
+        role: data.role,
         token: data.token,
       }));
       localStorage.setItem("userId", data.id);
-      localStorage.setItem("role", data.role); // Salvează rolul
+      localStorage.setItem("role", data.role);
       localStorage.setItem("token", data.token);
-      navigate("/");
+      navigate("/admin");
     } else {
-      setError("Email sau parolă incorecte");
+      setError("Acces interzis. Doar administratorii pot accesa această secțiune.");
     }
   };
 
@@ -36,10 +50,12 @@ const Admin = () => {
       onResReceived(response);
     } catch (err) {
       console.log("Eroare în componenta Admin:", err);
-      if (err.message) {
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message) {
         setError(err.message);
       } else {
-        setError("Email sau parolă incorecte");
+        setError("A apărut o eroare la autentificare. Vă rugăm să încercați din nou.");
       }
     }
   };

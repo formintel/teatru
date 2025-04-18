@@ -109,11 +109,11 @@ Bara de navigare modernă și responsive oferă acces rapid la toate funcțional
    - **Pentru Utilizatori Autentificați**:
      - Link către Profil
      - Buton de Deconectare
+     - Buton de Notificari
 ![Utilizatori autentificati](./screenshots/navbar/utilizatori-autentificati.png)
    - **Pentru Administratori**:
      - Link către Panoul Admin
      - Buton de Deconectare
-![Admin](./screenshots/navbar/admin.png)
 
 4. **Versiune Mobilă**
    - Meniu hamburger pentru dispozitive mobile
@@ -214,23 +214,43 @@ Pagina detaliată a unui spectacol oferă funcționalități diferite în funcț
   - Ștergere spectacol
 ![Detalii Spectacol](./screenshots/spectacole/detalii-spectacol.png)
 
-### 5. Sistem de Autentificare
-![Autentificare](./screenshots/auth/autentificare.png)
-- Înregistrare utilizator nou
-- Autentificare
+### 5. Panoul de Administrare
+Panoul de administrare oferă o interfață modernă și intuitivă pentru gestionarea completă a platformei:
 
-### 6. Gestionare Rezervări
-- Selectare locuri -> locurile ocupate nu mai pot fi selectate
-                   -> se pot selecta mai multe locuri deodata 
-![Locuri](./screenshots/spectacole/selectare-locuri.png)
+#### Dashboard Principal
+![Dashboard Admin](./screenshots/admin/dashboard.png)
+- Card-uri interactive pentru accesul rapid la funcționalități:
+  - Adăugare Spectacole
+  - Gestionare Rezervări
+  - Statistici
+  - Gestionare Conturi
 
--Pagina de card 
-![Plata](./screenshots/spectacole/plata.png)
+#### Gestionare Spectacole
+- Adăugare spectacole noi cu:
+  - Informații complete (titlu, descriere, gen, etc.)
+  - Încărcare poster
+  - Programare reprezentații
+- Editare spectacole existente
+- Ștergere spectacole (cu notificări automate pentru utilizatorii afectați)
+- Gestionare reprezentații:
+  - Adăugare/ștergere date
+  - Actualizare număr de locuri disponibile
+  - Sistem automat de notificări pentru modificări
 
-- Generare bilet cu QR code
-![Bilet](./screenshots/spectacole/bilet.png)
+#### Gestionare Rezervări
+- Vizualizare toate rezervările
 
-### 7. Pagini de Profil
+#### Statistici și Rapoarte
+- Grafice interactive pentru:
+  - Vânzări pe perioade
+  - Ocupare săli
+  - Rating-uri spectacole
+
+#### Gestionare Utilizatori
+- Listă completă utilizatori
+- Gestionare conturi
+
+### 6. Pagini de Profil
 
 #### Profil Utilizator
 Pagina de profil pentru utilizatori obișnuiți oferă o interfață personalizată pentru gestionarea contului și vizualizarea activității:

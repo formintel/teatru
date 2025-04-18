@@ -18,6 +18,7 @@ import AdminPanel from './components/Admin/AdminPanel';
 import ManageMovies from './components/Admin/ManageMovies';
 import ManageBookings from './components/Admin/ManageBookings';
 import Statistics from './components/Admin/Statistics';
+import ManageUsers from './components/Admin/ManageUsers';
 
 function App() {
   const dispatch = useDispatch();
@@ -54,10 +55,15 @@ function App() {
             } 
           />
           
-          {!isLoggedIn && (
-            <Route path="/admin-login" element={<Admin />} />
-          )}
+          {/* Rută pentru autentificare admin */}
+          <Route 
+            path="/admin-login" 
+            element={
+              !isLoggedIn ? <Admin /> : <Navigate to="/admin" replace />
+            } 
+          />
           
+          {/* Rute pentru utilizatori normali */}
           {isLoggedIn && userRole === "user" && (
             <>
               <Route path="/user" element={<UserProfile />} />
@@ -66,15 +72,22 @@ function App() {
             </>
           )}
           
-          {isLoggedIn && userRole === "admin" && (
+          {/* Rute pentru admin */}
+          {isLoggedIn && userRole === "admin" ? (
             <>
               <Route path="/admin" element={<AdminPanel />} />
               <Route path="/admin/add-movie" element={<AddMovie />} />
               <Route path="/admin/manage-movies" element={<ManageMovies />} />
               <Route path="/admin/manage-bookings" element={<ManageBookings />} />
               <Route path="/admin/statistics" element={<Statistics />} />
+              <Route path="/admin/users" element={<ManageUsers />} />
             </>
+          ) : (
+            <Route path="/admin/*" element={<Navigate to="/admin-login" replace />} />
           )}
+
+          {/* Rută pentru pagini inexistente */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
     </div>

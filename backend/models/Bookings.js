@@ -21,9 +21,13 @@ const bookingSchema = new mongoose.Schema({
   },
   showTimeId: {
     type: mongoose.Types.ObjectId,
-    ref: "ShowTime",  // If you have a separate ShowTime model
     required: true
   },
+}, {
+  timestamps: true
 });
+
+// Adăugăm un index compus pentru a preveni duplicate
+bookingSchema.index({ movie: 1, showTimeId: 1, seatNumber: 1 }, { unique: true });
 
 export default mongoose.model("Booking", bookingSchema);

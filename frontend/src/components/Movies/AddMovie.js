@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { addMovie } from "../../api-helpers/api-helpers";
+import { useNavigate } from "react-router-dom";
 
 const AddMovie = () => {
+  const navigate = useNavigate();
   const [inputs, setInputs] = useState({
     title: "",
     description: "",
@@ -131,12 +133,26 @@ const AddMovie = () => {
       });
   };
 
+  const handleBack = () => {
+    navigate('/admin');
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-8 font-serif">
-          Adaugă Spectacol Nou
-        </h2>
+        <div className="flex justify-between items-center mb-8">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          >
+            ← Înapoi
+          </button>
+          <h2 className="text-3xl font-bold text-center text-gray-800 font-serif">
+            Adaugă Spectacol Nou
+          </h2>
+          <div className="w-[88px]"></div> {/* Spacer pentru aliniere */}
+        </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

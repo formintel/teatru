@@ -2,6 +2,8 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import Admin from "../models/Admin.js";
 import Movie from "../models/Movie.js";
+import Booking from "../models/Bookings.js";
+import { createNotificationForUsers } from "./notification-controller.js";
 
 export const addMovie = async (req, res, next) => {
   const extractedToken = req.headers.authorization?.split(" ")[1];
@@ -219,18 +221,74 @@ export const updateMovie = async (req, res, next) => {
   }
 
   try {
-    // Verifică dacă filmul există și aparține adminului
-    const movie = await Movie.findById(id);
-    if (!movie) {
-      return res.status(404).json({ message: "Filmul nu a fost găsit" });
+    // Verificăm dacă există filmul și obținem showtime-urile vechi
+    const existingMovie = await Movie.findById(id);
+    if (!existingMovie) {
+      return res.status(404).json({ message: "Spectacolul nu a fost găsit" });
     }
 
-    if (movie.admin.toString() !== adminId) {
-      return res.status(403).json({ message: "Nu ai permisiunea de a actualiza acest film" });
+    console.log("Showtime-uri existente:", existingMovie.showTimes);
+    console.log("Showtime-uri noi primite:", showTimes);
+
+    // Identificăm showtime-urile care au fost șterse
+    const oldShowTimeIds = existingMovie.showTimes.map(st => st._id.toString());
+    const newShowTimeIds = showTimes.map(st => {
+      // Handle both string IDs and ObjectIds
+      if (st._id) {
+        return typeof st._id === 'string' ? st._id : st._id.toString();
+      }
+      return null;
+    }).filter(Boolean);
+
+    console.log("ID-uri vechi:", oldShowTimeIds);
+    console.log("ID-uri noi:", newShowTimeIds);
+
+    const deletedShowTimeIds = oldShowTimeIds.filter(id => !newShowTimeIds.includes(id));
+    console.log("ID-uri șterse:", deletedShowTimeIds);
+
+    if (deletedShowTimeIds.length > 0) {
+      console.log("Căutăm rezervări afectate pentru showtime-urile:", deletedShowTimeIds);
+      
+      // Găsim toate rezervările afectate
+      const affectedBookings = await Booking.find({
+        movie: id,
+        showTimeId: { $in: deletedShowTimeIds }
+      });
+
+      console.log("Rezervări afectate găsite:", affectedBookings);
+
+      if (affectedBookings.length > 0) {
+        // Colectăm ID-urile unice ale utilizatorilor afectați
+        const affectedUserIds = [...new Set(affectedBookings.map(booking => booking.user.toString()))];
+        console.log("Utilizatori afectați:", affectedUserIds);
+
+        // Creăm notificări pentru utilizatorii afectați
+        const notificationResult = await createNotificationForUsers(
+          affectedUserIds,
+          "Reprezentație anulată",
+          `O reprezentație pentru spectacolul "${existingMovie.title}" la care aveați bilet a fost anulată. Rezervarea dvs. a fost anulată automat.`,
+          "warning"
+        );
+        console.log("Rezultat creare notificări:", notificationResult);
+
+        // Ștergem rezervările afectate
+        const deleteResult = await Booking.deleteMany({
+          movie: id,
+          showTimeId: { $in: deletedShowTimeIds }
+        });
+        console.log("Rezultat ștergere rezervări:", deleteResult);
+      }
     }
 
-    // Pregătim datele pentru actualizare
-    const updateData = {
+    // Procesăm showtime-urile noi pentru a ne asigura că au formatul corect
+    const processedShowTimes = showTimes.map(st => ({
+      _id: st._id || new mongoose.Types.ObjectId(),
+      date: new Date(st.date),
+      availableSeats: st.availableSeats
+    }));
+
+    // Actualizăm filmul cu noile date
+    const movie = await Movie.findByIdAndUpdate(id, {
       title,
       description,
       posterUrl,
@@ -241,83 +299,51 @@ export const updateMovie = async (req, res, next) => {
       sala,
       numarLocuri: Number(numarLocuri),
       actors: actors || [],
-      showTimes: showTimes.map(showTime => {
-        console.log("Processing showTime:", showTime);
-        return {
-          _id: showTime._id,
-          date: new Date(showTime.date),
-          availableSeats: showTime.availableSeats || Number(numarLocuri)
-        };
-      })
-    };
+      showTimes: processedShowTimes
+    }, { new: true });
 
-    console.log("Final update data:", updateData);
-
-    // Actualizează filmul
-    const updatedMovie = await Movie.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true }
-    );
-
-    console.log("Updated movie from database:", updatedMovie);
-
-    return res.status(200).json({ movie: updatedMovie });
+    console.log("Film actualizat:", movie);
+    return res.status(200).json({ movie });
   } catch (err) {
     console.error("Error updating movie:", err);
     return res.status(500).json({ message: "Eroare la actualizarea spectacolului", error: err.message });
   }
 };
 
-export const deleteMovie = async (req, res, next) => {
-  console.log("deleteMovie controller function called");
-  console.log("Request params:", req.params);
-
-  const extractedToken = req.headers.authorization?.split(" ")[1];
-  if (!extractedToken) {
-    console.log("No token found");
-    return res.status(401).json({ message: "Token Not Found" });
-  }
-
-  let adminId;
-  try {
-    const decrypted = jwt.verify(extractedToken, process.env.JWT_SECRET);
-    adminId = decrypted.id;
-    console.log("Admin ID from token:", adminId);
-  } catch (err) {
-    console.log("Token verification failed:", err);
-    return res.status(401).json({ message: "Invalid Token" });
-  }
-
+export const deleteMovie = async (req, res) => {
   const id = req.params.id;
-
+  
   try {
-    // Verifică dacă filmul există și aparține adminului
+    // Găsim toate rezervările pentru acest spectacol
+    const bookings = await Booking.find({ movie: id });
+    const affectedUserIds = [...new Set(bookings.map(booking => booking.user))];
+    
+    // Ștergem toate rezervările pentru acest spectacol
+    await Booking.deleteMany({ movie: id });
+    
+    // Găsim spectacolul pentru a-i obține titlul
     const movie = await Movie.findById(id);
     if (!movie) {
-      return res.status(404).json({ message: "Filmul nu a fost găsit" });
+      return res.status(404).json({ message: "Spectacolul nu a fost găsit" });
     }
-
-    if (movie.admin.toString() !== adminId) {
-      return res.status(403).json({ message: "Nu ai permisiunea de a șterge acest film" });
-    }
-
-    // Șterge filmul
-    await Movie.findByIdAndDelete(id);
-
-    // Actualizează lista de filme a adminului
-    const adminUser = await Admin.findById(adminId);
-    if (adminUser) {
-      adminUser.addedMovies = adminUser.addedMovies.filter(
-        movieId => movieId.toString() !== id
+    
+    // Creăm notificări pentru toți utilizatorii afectați
+    if (affectedUserIds.length > 0) {
+      await createNotificationForUsers(
+        affectedUserIds,
+        "Spectacol anulat",
+        `Spectacolul "${movie.title}" a fost anulat. Rezervările dvs. au fost anulate automat.`,
+        "warning"
       );
-      await adminUser.save();
     }
-
-    return res.status(200).json({ message: "Film șters cu succes" });
+    
+    // Ștergem spectacolul
+    await Movie.findByIdAndDelete(id);
+    
+    return res.status(200).json({ message: "Spectacol șters cu succes" });
   } catch (err) {
-    console.error("Error deleting movie:", err);
-    return res.status(500).json({ message: "Eroare la ștergerea spectacolului", error: err.message });
+    console.error(err);
+    return res.status(500).json({ message: "Eroare la ștergerea spectacolului" });
   }
 };
 

@@ -4,7 +4,8 @@ import dotenv from "dotenv";
 import userRouter from "./routes/user-routes.js";
 import adminRouter from "./routes/admin-routes.js";
 import movieRouter from "./routes/movie-routes.js";
-import bookingsRouter from "./routes/booking-routes.js";
+import bookingRouter from "./routes/booking-routes.js";
+import notificationRouter from "./routes/notification-routes.js";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -57,7 +58,8 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/user", userRouter);
 app.use("/admin", adminRouter);
 app.use("/movie", movieRouter);
-app.use("/booking", bookingsRouter);
+app.use("/booking", bookingRouter);
+app.use("/notification", notificationRouter);
 
 mongoose
   .connect(process.env.MONGODB_URI, {

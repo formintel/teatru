@@ -4,10 +4,12 @@ import {
   getBookingById,
   newBooking,
   getOccupiedSeats,
+  getAllBookings
 } from "../controllers/booking-controller.js";
 
 const bookingsRouter = express.Router();
 
+bookingsRouter.get("/all", getAllBookings);
 bookingsRouter.get("/occupied-seats", getOccupiedSeats); 
 bookingsRouter.get("/:id", getBookingById);
 bookingsRouter.post("/", newBooking);

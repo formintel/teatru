@@ -20,7 +20,7 @@ const steps = ['Detalii Rezervare', 'Plată', 'Confirmare'];
 const PaymentPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { movie, selectedSeats, showTimeId, totalPrice } = location.state || {};
+  const { movie, selectedSeats, showTimeId, date, totalPrice } = location.state || {};
 
   const [activeStep, setActiveStep] = useState(1);
   const [cardDetails, setCardDetails] = useState({
@@ -33,11 +33,11 @@ const PaymentPage = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    console.log("Payment page data:", { movie, selectedSeats, showTimeId, totalPrice });
-    if (!movie || !selectedSeats || !showTimeId) {
+    console.log("Payment page data:", { movie, selectedSeats, showTimeId, date, totalPrice });
+    if (!movie || !selectedSeats || !showTimeId || !date) {
       setError("Date lipsă pentru rezervare");
     }
-  }, [movie, selectedSeats, showTimeId, totalPrice]);
+  }, [movie, selectedSeats, showTimeId, date, totalPrice]);
 
   const handleCardChange = (e) => {
     const { name, value } = e.target;
@@ -74,6 +74,7 @@ const PaymentPage = () => {
         movieId: movie._id,
         selectedSeats,
         showTimeId,
+        date,
         totalPrice
       });
 
@@ -84,7 +85,7 @@ const PaymentPage = () => {
       const bookingData = {
         movie: movie._id,
         seatNumbers: selectedSeats,
-        date: new Date().toISOString(),
+        date: date,
         showTimeId: showTimeId,
         user: localStorage.getItem("userId")
       };

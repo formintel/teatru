@@ -76,7 +76,7 @@ const HomePage = () => {
             </Link>
             {isLoggedIn && userRole === "admin" && (
               <Link
-                to="/user-admin" // Ajustăm ruta pentru a indica spre AdminProfile
+                to="/admin"
                 className="bg-yellow-500 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-full font-semibold hover:bg-yellow-600 transition-colors duration-300 transform hover:scale-105 text-center"
               >
                 Panou Admin

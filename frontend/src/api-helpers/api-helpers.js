@@ -7,7 +7,7 @@ const instance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 5000, // timeout de 5 secunde
+  timeout: 15000, // mărim timeout-ul la 15 secunde
 });
 
 // Interceptor pentru request-uri
@@ -231,7 +231,8 @@ export const sendAdminAuthRequest = async (data) => {
     console.log("Token salvat:", savedToken);
     
     return {
-      ...res.data,
+      id: res.data.admin._id,
+      token,
       role: "admin",
     };
   } catch (err) {
@@ -506,7 +507,7 @@ export const getAdminById = async () => {
 // Preluare toate rezervările (pentru admin)
 export const getAllBookings = async () => {
   try {
-    const res = await instance.get("/admin/bookings", {
+    const res = await instance.get("/booking/all", {
       headers: getAuthHeader(),
     });
 
@@ -516,7 +517,11 @@ export const getAllBookings = async () => {
 
     return res.data;
   } catch (err) {
-    console.error("Eroare la preluarea rezervărilor:", err);
+    console.error("Eroare la preluarea rezervărilor:", {
+      message: err.message,
+      status: err.response?.status,
+      data: err.response?.data
+    });
     throw err;
   }
 };
@@ -593,7 +598,7 @@ export const getAdminStatistics = async () => {
       throw new Error("Nu există admin autentificat");
     }
 
-    const res = await instance.get(`/admin/${adminId}/statistics`, {
+    const res = await instance.get(`/admin/statistics`, {
       headers: getAuthHeader(),
     });
 
@@ -629,4 +634,106 @@ export const getUserRating = async (movieId, userId) => {
   }
   
   return res.data.rating;
+};
+
+export const getAllUsers = async () => {
+  try {
+    const res = await instance.get('/user');
+    if (res.status !== 200) {
+      throw new Error('Nu s-au putut prelua utilizatorii');
+    }
+    return res.data;
+  } catch (err) {
+    console.error('Eroare la preluarea utilizatorilor:', err);
+    throw err;
+  }
+};
+
+export const deleteUser = async (id) => {
+  try {
+    const res = await instance.delete(`/user/${id}`);
+    if (res.status !== 200) {
+      throw new Error('Nu s-a putut șterge utilizatorul');
+    }
+    return res.data;
+  } catch (err) {
+    console.error('Eroare la ștergerea utilizatorului:', err);
+    throw err;
+  }
+};
+
+export const updateUser = async (id, data) => {
+  try {
+    const res = await instance.put(`/user/${id}`, data);
+    if (res.status !== 200) {
+      throw new Error('Nu s-a putut actualiza utilizatorul');
+    }
+    return res.data;
+  } catch (err) {
+    console.error('Eroare la actualizarea utilizatorului:', err);
+    throw err;
+  }
+};
+
+// Preluare notificări utilizator
+export const getUserNotifications = async () => {
+  try {
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      throw new Error("Utilizatorul nu este autentificat");
+    }
+
+    const res = await instance.get(`/notification/user/${userId}`, {
+      headers: getAuthHeader(),
+    });
+
+    if (res.status !== 200) {
+      throw new Error("Eroare la preluarea notificărilor");
+    }
+
+    return res.data.notifications;
+  } catch (err) {
+    console.error("Eroare la preluarea notificărilor:", err);
+    throw err;
+  }
+};
+
+// Marchează o notificare ca citită
+export const markNotificationAsRead = async (notificationId) => {
+  try {
+    const res = await instance.patch(
+      `/notification/${notificationId}/read`,
+      {},
+      {
+        headers: getAuthHeader(),
+      }
+    );
+
+    if (res.status !== 200) {
+      throw new Error("Eroare la marcarea notificării ca citită");
+    }
+
+    return res.data.notification;
+  } catch (err) {
+    console.error("Eroare la marcarea notificării ca citită:", err);
+    throw err;
+  }
+};
+
+// Șterge o notificare
+export const deleteNotification = async (notificationId) => {
+  try {
+    const res = await instance.delete(`/notification/${notificationId}`, {
+      headers: getAuthHeader(),
+    });
+
+    if (res.status !== 200) {
+      throw new Error("Eroare la ștergerea notificării");
+    }
+
+    return true;
+  } catch (err) {
+    console.error("Eroare la ștergerea notificării:", err);
+    throw err;
+  }
 };

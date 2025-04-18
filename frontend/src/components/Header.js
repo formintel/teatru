@@ -24,6 +24,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { authActions } from "../store";
 import dramaLogo from "../assets/images/drama-logo.jpg";
 import SearchIcon from "@mui/icons-material/Search";
+import NotificationsMenu from './Header/NotificationsMenu';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -176,7 +177,7 @@ const Header = () => {
                 </ListItem>
               )}
               {userRole === "admin" && (
-                <ListItem button component={Link} to="/user-admin" onClick={toggleMobileMenu}>
+                <ListItem button component={Link} to="/admin" onClick={toggleMobileMenu}>
                   <ListItemText primary="Panou Admin" />
                 </ListItem>
               )}
@@ -198,104 +199,106 @@ const Header = () => {
     }`}>
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-3">
-            <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 ${
-              isScrolled ? 'sm:w-10 sm:h-10' : ''
-            }`}>
-              <img
-                src={dramaLogo}
-                alt="DramArena Logo"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="text-xl sm:text-2xl font-bold text-white hover:text-red-200 transition-colors duration-300 font-serif">
-              DramArena
-            </div>
+          <Link to="/" className="flex items-center space-x-2">
+            <img src={dramaLogo} alt="DramArena Logo" className="w-10 h-10 rounded-full" />
+            <span className="text-white text-xl font-semibold hidden sm:inline">DramArena</span>
           </Link>
 
-          {isMobile ? (
-            <div className="flex items-center space-x-4">
-              <IconButton
-                onClick={toggleMobileMenu}
-                sx={{ color: 'white' }}
-              >
-                <MenuIcon />
-              </IconButton>
+          {!isMobile && (
+            <div className="flex-1 max-w-xl mx-4">
+              <Autocomplete
+                value={value}
+                onChange={handleMovieSelect}
+                inputValue={searchQuery}
+                onInputChange={handleSearchChange}
+                options={filteredMovies}
+                getOptionLabel={(option) => `${option.title} (Rating: ${option.averageRating?.toFixed(1) || '0.0'})`}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="Caută spectacole..."
+                    size="small"
+                    sx={{
+                      width: '100%',
+                      "& .MuiOutlinedInput-root": {
+                        color: "white",
+                        backgroundColor: "rgba(255, 255, 255, 0.1)",
+                        "& fieldset": {
+                          borderColor: "rgba(255, 255, 255, 0.3)",
+                        },
+                        "&:hover fieldset": {
+                          borderColor: "rgba(255, 255, 255, 0.5)",
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor: "white",
+                        },
+                      },
+                      "& .MuiInputBase-input::placeholder": {
+                        color: "rgba(255, 255, 255, 0.7)",
+                      },
+                    }}
+                  />
+                )}
+                sx={{
+                  "& .MuiAutocomplete-popupIndicator": {
+                    color: "white",
+                  },
+                  "& .MuiAutocomplete-clearIndicator": {
+                    color: "white",
+                  },
+                }}
+              />
             </div>
-          ) : (
-            <div className="flex items-center space-x-6">
-              <div className="relative">
-                <Autocomplete
-                  value={value}
-                  onChange={handleMovieSelect}
-                  inputValue={searchQuery}
-                  onInputChange={handleSearchChange}
-                  options={filteredMovies}
-                  getOptionLabel={(option) => `${option.title} (Rating: ${option.averageRating?.toFixed(1) || '0.0'})`}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      placeholder="Caută spectacole..."
-                      size="small"
-                      sx={{
-                        width: 300,
-                        "& .MuiOutlinedInput-root": {
-                          color: "white",
-                          "& fieldset": {
-                            borderColor: "rgba(255, 255, 255, 0.3)",
-                          },
-                          "&:hover fieldset": {
-                            borderColor: "rgba(255, 255, 255, 0.5)",
-                          },
-                          "&.Mui-focused fieldset": {
-                            borderColor: "white",
-                          },
-                        },
-                        "& .MuiInputBase-input::placeholder": {
-                          color: "rgba(255, 255, 255, 0.7)",
-                        },
-                      }}
-                    />
-                  )}
-                  sx={{
-                    "& .MuiAutocomplete-popupIndicator": {
-                      color: "white",
-                    },
-                    "& .MuiAutocomplete-clearIndicator": {
-                      color: "white",
-                    },
-                  }}
-                />
-              </div>
+          )}
 
-              <Link to="/movies" className="text-white hover:text-red-200 transition-colors duration-300">
+          {!isMobile && (
+            <div className="flex items-center space-x-4">
+              <Link to="/movies" className="text-white hover:text-gray-200">
                 Spectacole
               </Link>
-
-              {!isLoggedIn ? (
-                <Link to="/auth" className="text-white hover:text-red-200 transition-colors duration-300">
+              {!isLoggedIn && (
+                <Link to="/auth" className="text-white hover:text-gray-200">
                   Autentificare
                 </Link>
-              ) : (
+              )}
+              {isLoggedIn && (
                 <>
                   {userRole === "user" && (
-                    <Link to="/user" className="text-white hover:text-red-200 transition-colors duration-300">
-                      Profil
-                    </Link>
+                    <>
+                      <NotificationsMenu />
+                      <Link to="/user" className="text-white hover:text-gray-200">
+                        Profil
+                      </Link>
+                    </>
                   )}
                   {userRole === "admin" && (
-                    <Link to="/user-admin" className="text-white hover:text-red-200 transition-colors duration-300">
+                    <Link to="/admin" className="text-white hover:text-gray-200">
                       Panou Admin
                     </Link>
                   )}
                   <button
                     onClick={logout}
-                    className="bg-white text-red-900 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors duration-300 transform hover:scale-105"
+                    className="text-white hover:text-gray-200"
                   >
                     Deconectare
                   </button>
                 </>
               )}
+            </div>
+          )}
+
+          {isMobile && (
+            <div className="flex items-center space-x-2">
+              {isLoggedIn && userRole === "user" && <NotificationsMenu />}
+              <IconButton
+                edge="start"
+                color="inherit"
+                aria-label="menu"
+                onClick={toggleMobileMenu}
+                sx={{ color: 'white' }}
+              >
+                <MenuIcon />
+              </IconButton>
             </div>
           )}
         </div>

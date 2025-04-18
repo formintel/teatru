@@ -198,3 +198,20 @@ export const getOccupiedSeats = async (req, res) => {
     });
   }
 };
+
+export const getAllBookings = async (req, res, next) => {
+  try {
+    const bookings = await Bookings.find()
+      .populate('user', 'name email')
+      .populate('movie', 'title')
+      .sort({ date: -1 });
+
+    return res.status(200).json({
+      message: "Rezervări preluate cu succes",
+      bookings: bookings
+    });
+  } catch (err) {
+    console.error("Eroare la preluarea rezervărilor:", err);
+    return res.status(500).json({ message: "Eroare la preluarea rezervărilor" });
+  }
+};

@@ -45,7 +45,7 @@ const AdminAuth = () => {
     localStorage.setItem("role", data.role);
     localStorage.setItem("token", data.token);
     setOpen(false);
-    navigate("/");
+    navigate("/admin");
   };
 
   const handleSubmit = (e) => {
