@@ -1,7 +1,7 @@
 // src/App.js
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import Admin from "./components/Auth/Admin";
 import Auth from "./components/Auth/Auth";
 import Booking from "./components/Booking/Booking";
@@ -35,23 +35,37 @@ function App() {
   return (
     <div>
       <Header />
-      <section>
+      <main className="pt-24">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/movies" element={<Movies />} />
           <Route path="/movies/:id" element={<AdminMovieDetails />} />
           <Route path="/auth" element={<Auth />} />
+          
+          {/* Rute protejate pentru utilizatori autentificați */}
+          <Route 
+            path="/payment" 
+            element={
+              isLoggedIn && userRole === "user" ? (
+                <PaymentPage />
+              ) : (
+                <Navigate to="/auth" replace state={{ from: "/payment" }} />
+              )
+            } 
+          />
+          
           {!isLoggedIn && (
             <Route path="/admin-login" element={<Admin />} />
           )}
+          
           {isLoggedIn && userRole === "user" && (
             <>
               <Route path="/user" element={<UserProfile />} />
               <Route path="/user-profile" element={<UserProfile />} />
               <Route path="/booking/:id" element={<Booking />} />
-              <Route path="/payment" element={<PaymentPage />} />
             </>
           )}
+          
           {isLoggedIn && userRole === "admin" && (
             <>
               <Route path="/admin" element={<AdminPanel />} />
@@ -61,11 +75,8 @@ function App() {
               <Route path="/admin/statistics" element={<Statistics />} />
             </>
           )}
-          {/* Rute publice care trebuie să fie accesibile oricând */}
-          <Route path="/movies" element={<Movies />} />
-          <Route path="/movies/:id" element={<AdminMovieDetails />} />
         </Routes>
-      </section>
+      </main>
     </div>
   );
 }

@@ -6,7 +6,7 @@ Această aplicație web este o platformă pentru gestionarea spectacolelor de te
 ## Tehnologii Utilizate
 - Frontend: React.js, Material-UI, Redux Toolkit
 - Backend: Node.js, Express.js, MongoDB
-- Alte tehnologii: Axios, React Router, Leaflet (pentru hărți), QR Code generator
+- Alte tehnologii: Axios, React Router, QR Code generator
 
 ## Ghid de Instalare
 
@@ -66,6 +66,12 @@ Baza de date conține următoarele colecții:
 - **bookings**: Rezervări
 - **movies**: Spectacole de teatru
 
+## Roluri:
+•	Guest → poate vedea lista spectacolelor, dar nu poate face rezervări.
+•	User (autentificat) → poate face rezervări.
+•	Admin → gestionează spectacolelor și rezervările
+
+
 ## Conturi pentru Testare
 1. **Cont Administrator**
    - Email: r@y.com
@@ -75,9 +81,47 @@ Baza de date conține următoarele colecții:
    - Email: a@y.com
    - Parolă: 122
 
+
+
 ## Funcționalități
 
-### 1. Pagina Principală (HomePage)
+### 1. Navbar (Header)
+Bara de navigare modernă și responsive oferă acces rapid la toate funcționalitățile aplicației:
+
+#### Design și Comportament
+- Poziționare fixă în partea superioară a paginii (sticky header)
+- Efect de transparență și blur la scroll
+- Design responsiv pentru dispozitive mobile și desktop
+
+#### Componente Principale
+1. **Logo și Branding**
+
+2. **Sistem de Căutare**
+   - Căutare instantanee în toate spectacolele
+   - Afișează primele 10 spectacole după rating când nu există termen de căutare
+   - Caută în titlul spectacolului
+
+3. **Meniu de Navigare**
+   - **Pentru Vizitatori**:
+     - Link către Spectacole
+     - Buton de Autentificare
+![Guest](./screenshots/navbar/guest.png)
+   - **Pentru Utilizatori Autentificați**:
+     - Link către Profil
+     - Buton de Deconectare
+![Utilizatori autentificati](./screenshots/navbar/utilizatori-autentificati.png)
+   - **Pentru Administratori**:
+     - Link către Panoul Admin
+     - Buton de Deconectare
+![Admin](./screenshots/navbar/admin.png)
+
+4. **Versiune Mobilă**
+   - Meniu hamburger pentru dispozitive mobile
+   - Drawer lateral cu toate opțiunile
+   - Căutare adaptată pentru ecrane mici
+![Responsive](./screenshots/navbar/responsive.png)
+
+### 2. Pagina Principală (HomePage)
 Pagina principală a aplicației oferă o experiență modernă și atractivă pentru vizitatori, cu următoarele elemente:
 
 #### Hero Section
@@ -88,6 +132,7 @@ Pagina principală a aplicației oferă o experiență modernă și atractivă p
 - Butoane de acțiune pentru:
   - Vizualizarea spectacolelor
   - Accesarea panoului de administrare (pentru admini)
+  ![Hero Section for admins](./screenshots/homepage/hero-section-admin.png)
 
 #### Carousel de Spectacole
 ![Carousel de Spectacole](./screenshots/homepage/carousel.png)
@@ -116,37 +161,96 @@ Pagina principală a aplicației oferă o experiență modernă și atractivă p
 - Integrare cu Leaflet pentru afișarea locației teatrului
 - Harta interactivă pentru ghidare
 
-### Capturi de Ecran
-Pentru a adăuga capturi de ecran în README:
-1. Creați un director `screenshots` în rădăcina proiectului
-2. Salvați imaginile în format PNG sau JPG
-3. Adăugați referințele în README folosind sintaxa Markdown:
-```markdown
+### 3. Pagina de Spectacole
+- Paginare cu 9 spectacole per pagină
+- Filtrare avansată:
+  - După gen
+  - După durată
+  - După preț
+  - După sală
+- Sortare după:
+  - Rating (implicit)
+  - Preț (crescător/descrescător)
+![Filtre](./screenshots/spectacole/filtre.png)
 
-```
+- Card-uri interactive pentru fiecare spectacol:
+  - Poster
+  - Titlu și detalii
+  - Rating mediu
+  - Preț
+  - Buton de rezervare (pentru utilizatori autentificați)
+  - Butoane de editare/ștergere (pentru administratori)
+![Spectacole](./screenshots/spectacole/spectacole.png)
 
-Exemplu de structură recomandată pentru capturi de ecran:
-```
-screenshots/
-├── homepage/
-│   ├── hero-section.png
-│   ├── carousel.png
-│   ├── features.png
-│   └── map.png
-```
+### 4. Pagina de Detalii Spectacol
+Pagina detaliată a unui spectacol oferă funcționalități diferite în funcție de rolul utilizatorului:
 
-### 2. Sistem de Autentificare
+#### Pentru Vizitatori (Guest)
+- Vizualizare informații complete despre spectacol:
+  - Poster mare
+  - Titlu și gen
+  - Descriere detaliată
+  - Regizor și actori
+  - Rating mediu și număr de evaluări
+  - Preț bilet
+  - Program reprezentații
+- Buton de autentificare pentru rezervare
+
+#### Pentru Utilizatori Autentificați
+- Toate funcționalitățile vizitatorilor
+- Sistem de rating:
+  - Posibilitatea de a acorda o notă (1-5 stele)
+  - Modificare rating anterior
+- Rezervare bilete:
+  - Selectare dată și oră
+  - Vizualizare locuri disponibile
+  - Buton de rezervare cu redirecționare către pagina de rezervare
+
+#### Pentru Administratori
+- Toate funcționalitățile utilizatorilor
+- Funcții de administrare:
+  - Editare informații spectacol
+  - Adăugare/Modificare reprezentații
+  - Ștergere spectacol
+![Detalii Spectacol](./screenshots/spectacole/detalii-spectacol.png)
+
+### 5. Sistem de Autentificare
+![Autentificare](./screenshots/auth/autentificare.png)
 - Înregistrare utilizator nou
 - Autentificare
-- Recuperare parolă
 
-### 3. Gestionare Rezervări
-- Selectare locuri
-- Vizualizare istoric rezervări
+### 6. Gestionare Rezervări
+- Selectare locuri -> locurile ocupate nu mai pot fi selectate
+                   -> se pot selecta mai multe locuri deodata 
+![Locuri](./screenshots/spectacole/selectare-locuri.png)
+
+-Pagina de card 
+![Plata](./screenshots/spectacole/plata.png)
+
 - Generare bilet cu QR code
+![Bilet](./screenshots/spectacole/bilet.png)
 
-### 4. Panou Administrare
-- Adăugare/Editare spectacole
-- Gestionare utilizatori
-- Vizualizare statistici rezervări
+### 7. Pagini de Profil
+
+#### Profil Utilizator
+Pagina de profil pentru utilizatori obișnuiți oferă o interfață personalizată pentru gestionarea contului și vizualizarea activității:
+
+##### Informații Cont
+- Detalii personale
+- Email și nume utilizator
+
+##### Istoric Rezervări
+- Lista completă a rezervărilor făcute
+- Optiunea de a vizualiza si de a sterge biletul 
+![Profil Utilizator](./screenshots/auth/user-profile.png)
+
+#### Profil Administrator
+Panoul de administrare oferă un set complet de instrumente pentru gestionarea platformei:
+
+##### Pagina de spectacole
+- Optiunea de a edita sau a sterge spectacole
+- Nu este disponibila optiunea de rezervare bilet, deoarece nu este o buna practica din punct de vedere al securitatii
+![Editare spectacole](./screenshots/admin/editare-spectacole.png)
+
+
 

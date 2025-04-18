@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useSearchParams } from "react-router-dom";
 import { getAllMovies, updateMovie, deleteMovie } from "../../api-helpers/api-helpers";
-import { Typography, Modal, TextField, Button, IconButton, Box, FormControl, InputLabel, Select, MenuItem, Slider, Chip, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { Typography, Modal, TextField, Button, IconButton, Box, FormControl, InputLabel, Select, MenuItem, Slider, Chip, ToggleButton, ToggleButtonGroup, Pagination } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RatingComponent from "./RatingComponent";
@@ -28,6 +28,8 @@ const Movies = () => {
   const [movies, setMovies] = useState([]);
   const [error, setError] = useState(null);
   const [open, setOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [itemsPerPage] = useState(9);
   const [filters, setFilters] = useState({
     gen: "",
     durata: [0, 300],
@@ -87,6 +89,11 @@ const Movies = () => {
     });
   };
 
+  const handlePageChange = (event, value) => {
+    setPage(value);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const filteredMovies = movies
     ?.filter((movie) => {
       const matchesSearch = 
@@ -118,6 +125,11 @@ const Movies = () => {
           return 0;
       }
     });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredMovies.length / itemsPerPage);
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedMovies = filteredMovies.slice(startIndex, startIndex + itemsPerPage);
 
   const handleOpen = (movie) => {
     console.log("handleOpen apelat pentru filmul:", movie);
@@ -371,78 +383,106 @@ const Movies = () => {
             Nu s-au găsit spectacole care să corespundă filtrelor.
           </Typography>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredMovies &&
-            filteredMovies.map((movie) => (
-              <div
-                key={movie._id}
-                className={`bg-white rounded-lg shadow-lg overflow-hidden transform transition-transform duration-300 relative group ${
-                  userRole === "admin" ? "opacity-75" : "hover:scale-105"
-                }`}
-              >
-                <Link to={`/movies/${movie._id}`} className="block">
-                  <div className="relative">
-                    <img
-                      src={movie.posterUrl}
-                      alt={movie.title}
-                      className="w-full h-64 object-cover"
-                    />
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold mb-2">{movie.title}</h3>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">{movie.gen}</span>
-                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{movie.durata} min</span>
-                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Sala {movie.sala}</span>
-                      </div>
-                      <div className="mb-3">
-                        <RatingComponent
-                          averageRating={movie.averageRating || 0}
-                          totalRatings={movie.totalRatings || 0}
-                          readOnly={true}
-                        />
-                      </div>
-                      <p className="text-gray-500 text-sm mb-2">Regia: {movie.regizor}</p>
-                      <p className="text-gray-600 mb-4 line-clamp-3">{movie.description}</p>
-                      <div className="flex justify-between items-center">
-                        <span className="text-green-600 font-semibold">
-                          {movie.pret} RON
-                        </span>
-                      </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+          {paginatedMovies.map((movie) => (
+            <div
+              key={movie._id}
+              className={`bg-white rounded-lg shadow-lg overflow-hidden transform transition-transform duration-300 relative group ${
+                userRole === "admin" ? "opacity-75" : "hover:scale-105"
+              }`}
+            >
+              <Link to={`/movies/${movie._id}`} className="block">
+                <div className="relative">
+                  <img
+                    src={movie.posterUrl}
+                    alt={movie.title}
+                    className="w-full h-64 object-cover"
+                  />
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold mb-2">{movie.title}</h3>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">{movie.gen}</span>
+                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{movie.durata} min</span>
+                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Sala {movie.sala}</span>
+                    </div>
+                    <div className="mb-3">
+                      <RatingComponent
+                        averageRating={movie.averageRating || 0}
+                        totalRatings={movie.totalRatings || 0}
+                        readOnly={true}
+                      />
+                    </div>
+                    <p className="text-gray-500 text-sm mb-2">Regia: {movie.regizor}</p>
+                    <p className="text-gray-600 mb-4 line-clamp-3">{movie.description}</p>
+                    <div className="flex justify-between items-center">
+                      <span className="text-green-600 font-semibold">
+                        {movie.pret} RON
+                      </span>
                     </div>
                   </div>
-                </Link>
-                <div className="px-6 pb-6">
-                  {isLoggedIn && userRole === "user" ? (
-                    <Link
-                      to={`/booking/${movie._id}`}
-                      className="w-full bg-red-900 text-white px-4 py-2 rounded hover:bg-red-800 transition-colors duration-300 block text-center"
-                    >
-                      Rezervă
-                    </Link>
-                  ) : isLoggedIn && userRole === "admin" ? (
-                    <div className="flex justify-between mt-4">
-                      <IconButton onClick={() => handleOpen(movie)}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton onClick={() => handleDelete(movie._id)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </div>
-                  ) : (
-                    <Link
-                      to="/auth"
-                      className="w-full bg-red-900 text-white px-4 py-2 rounded hover:bg-red-800 transition-colors duration-300 block text-center group relative"
-                    >
-                      Rezervă
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-800 text-white text-sm rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                        Ups... Autentifica-te pentru rezervarea biletului
-                      </div>
-                    </Link>
-                  )}
                 </div>
+              </Link>
+              <div className="px-6 pb-6">
+                {isLoggedIn && userRole === "user" ? (
+                  <Link
+                    to={`/booking/${movie._id}`}
+                    className="w-full bg-red-900 text-white px-4 py-2 rounded hover:bg-red-800 transition-colors duration-300 block text-center"
+                  >
+                    Rezervă
+                  </Link>
+                ) : isLoggedIn && userRole === "admin" ? (
+                  <div className="flex justify-between mt-4">
+                    <IconButton onClick={() => handleOpen(movie)}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton onClick={() => handleDelete(movie._id)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </div>
+                ) : (
+                  <Link
+                    to="/auth"
+                    className="w-full bg-red-900 text-white px-4 py-2 rounded hover:bg-red-800 transition-colors duration-300 block text-center group relative"
+                  >
+                    Rezervă
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-800 text-white text-sm rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                      Ups... Autentifica-te pentru rezervarea biletului
+                    </div>
+                  </Link>
+                )}
               </div>
-            ))}
+            </div>
+          ))}
         </div>
+
+        {filteredMovies.length > itemsPerPage && (
+          <div className="flex justify-center mt-8">
+            <Pagination 
+              count={totalPages}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+              size="large"
+              showFirstButton
+              showLastButton
+              sx={{
+                '& .MuiPaginationItem-root': {
+                  color: '#7f1d1d',
+                  '&.Mui-selected': {
+                    backgroundColor: '#7f1d1d',
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: '#991b1b',
+                    },
+                  },
+                  '&:hover': {
+                    backgroundColor: 'rgba(127, 29, 29, 0.1)',
+                  },
+                },
+              }}
+            />
+          </div>
+        )}
 
         {/* Modal pentru editare */}
         <Modal open={open} onClose={handleClose}>

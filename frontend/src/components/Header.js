@@ -36,11 +36,12 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
-    getAllMovies()
+    getAllMovies(false)
       .then((data) => {
         setAllMovies(data.movies);
         const topMovies = data.movies
@@ -49,6 +50,16 @@ const Header = () => {
         setFilteredMovies(topMovies);
       })
       .catch((err) => console.log(err));
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      setIsScrolled(scrollPosition > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const logout = () => {
@@ -180,11 +191,17 @@ const Header = () => {
   );
 
   return (
-    <header className="bg-gradient-to-r from-red-900 to-purple-900 shadow-lg">
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      isScrolled 
+        ? 'bg-gradient-to-r from-red-900/95 to-purple-900/95 shadow-lg backdrop-blur-sm' 
+        : 'bg-gradient-to-r from-red-900 to-purple-900'
+    }`}>
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center overflow-hidden">
+            <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 ${
+              isScrolled ? 'sm:w-10 sm:h-10' : ''
+            }`}>
               <img
                 src={dramaLogo}
                 alt="DramArena Logo"

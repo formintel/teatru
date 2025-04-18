@@ -470,13 +470,15 @@ export const deleteBooking = async (id) => {
 // Preluare detalii utilizator
 export const getUserDetails = async () => {
   try {
-    const id = localStorage.getItem("userId");
-    const res = await instance.get(`/user/${id}`);
-
-    if (res.status !== 200) {
-      throw new Error("Eroare la preluarea detaliilor utilizatorului");
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      throw new Error("Utilizatorul nu este autentificat");
     }
 
+    const res = await instance.get(`/user/${userId}`);
+    if (res.status !== 200) {
+      throw new Error("Nu s-au putut prelua detaliile utilizatorului");
+    }
     return res.data;
   } catch (err) {
     console.error("Eroare la preluarea detaliilor utilizatorului:", err);

@@ -12,10 +12,12 @@ import {
   DialogActions,
   DialogContentText,
   Snackbar,
-  Alert
+  Alert,
+  Paper,
+  Avatar
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { getUserBooking, deleteBooking } from '../api-helpers/api-helpers';
+import { getUserBooking, deleteBooking, getUserDetails } from '../api-helpers/api-helpers';
 import { useNavigate } from 'react-router-dom';
 import Ticket from '../components/Booking/Ticket';
 
@@ -29,16 +31,29 @@ const UserProfile = () => {
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
   const [ticketToDelete, setTicketToDelete] = useState(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  
+  const [userDetails, setUserDetails] = useState(null);
+
   useEffect(() => {
-    // Verificăm dacă utilizatorul este autentificat
     const userId = localStorage.getItem("userId");
     if (!userId) {
       navigate("/auth");
       return;
     }
+    fetchUserData();
     fetchBookings();
   }, [navigate]);
+
+  const fetchUserData = async () => {
+    try {
+      const response = await getUserDetails();
+      if (response?.user) {
+        setUserDetails(response.user);
+      }
+    } catch (err) {
+      setError('Nu s-au putut încărca detaliile contului.');
+      console.error(err);
+    }
+  };
 
   const fetchBookings = async () => {
     try {
@@ -97,7 +112,7 @@ const UserProfile = () => {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <Typography>Se încarcă rezervările...</Typography>
+        <Typography>Se încarcă datele...</Typography>
       </Box>
     );
   }
@@ -112,7 +127,32 @@ const UserProfile = () => {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 4 }}>
+      {/* Secțiunea Informații Cont */}
+      <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h5" sx={{ mb: 3 }}>Informații Cont</Typography>
+
+        <Box sx={{ display: 'flex', gap: 4 }}>
+          <Avatar
+            sx={{ width: 100, height: 100, bgcolor: 'primary.main' }}
+          >
+            {userDetails?.name?.[0]?.toUpperCase() || 'U'}
+          </Avatar>
+
+          <Box sx={{ flex: 1 }}>
+            <Box>
+              <Typography variant="body1" gutterBottom>
+                <strong>Nume:</strong> {userDetails?.name || 'Nespecificat'}
+              </Typography>
+              <Typography variant="body1" gutterBottom>
+                <strong>Email:</strong> {userDetails?.email || 'Nespecificat'}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Paper>
+
+      {/* Secțiunea Rezervări */}
+      <Typography variant="h5" sx={{ mb: 3 }}>
         Rezervările mele
       </Typography>
 

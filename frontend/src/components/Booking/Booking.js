@@ -115,11 +115,14 @@ const Booking = () => {
       return;
     }
 
+    const totalPrice = selectedSeats.length * movie.pret;
+
     const bookingData = {
       movie: movie,
       selectedSeats,
       showTimeId: showTime._id,
-      date: showTime.date
+      date: showTime.date,
+      totalPrice: totalPrice
     };
 
     console.log("Date pentru rezervare:", bookingData);
