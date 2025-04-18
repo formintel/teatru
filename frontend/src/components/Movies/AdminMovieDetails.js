@@ -1,4 +1,4 @@
-import { Typography, Box, Grid, Card, CardContent, Chip, Divider, Button } from "@mui/material";
+import { Typography, Box, Grid, Card, CardContent, Chip, Divider, Button, Paper, Alert } from "@mui/material";
 import React, { Fragment, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getMovieDetails, addRating, getUserRating } from "../../api-helpers/api-helpers";
@@ -7,59 +7,39 @@ import { ro } from "date-fns/locale";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import RatingComponent from "./RatingComponent";
 import { useSelector } from "react-redux";
+import StarIcon from "@mui/icons-material/Star";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
 
 const AdminMovieDetails = () => {
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
   const [userRating, setUserRating] = useState(0);
+  const [ratingError, setRatingError] = useState("");
   const { id } = useParams();
   const navigate = useNavigate();
   const userId = useSelector((state) => state.auth.userId);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  const userRole = useSelector((state) => state.auth.role);
 
   useEffect(() => {
-    setLoading(true);
-    getMovieDetails(id)
-      .then((res) => {
-        console.log("Răspuns de la getMovieDetails:", res);
-        
-        if (!res || !res.movie) {
+    const fetchMovieDetails = async () => {
+      try {
+        const response = await getMovieDetails(id);
+        if (!response || !response.movie) {
           throw new Error("Nu s-au primit date pentru spectacol");
         }
-
-        const movieData = res.movie;
-        console.log("Date film:", movieData);
-        
-        // Verificăm dacă avem showTimes
-        if (!movieData.showTimes || !Array.isArray(movieData.showTimes)) {
-          console.warn("Nu s-au găsit showTimes, se setează array gol");
-          movieData.showTimes = [];
-        }
-
-        // Verificăm câmpurile necesare
-        const requiredFields = ['title', 'description', 'posterUrl', 'sala', 'numarLocuri', 'pret', 'regizor', 'durata', 'gen'];
-        const missingFields = requiredFields.filter(field => !movieData[field]);
-        
-        if (missingFields.length > 0) {
-          console.warn("Câmpuri lipsă în datele spectacolului:", missingFields);
-        }
-
-        setMovie(movieData);
-        
-        if (isLoggedIn) {
-          getUserRating(id, userId)
-            .then(rating => setUserRating(rating))
-            .catch(err => console.error("Eroare la preluarea rating-ului:", err));
-        }
+        setMovie(response.movie);
         setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Eroare la încărcarea detaliilor spectacolului:", err);
-        setError(err.message || "Nu s-a putut încărca spectacolul.");
+      } catch (error) {
+        console.error("Eroare la încărcarea detaliilor:", error);
+        setError(error.message || "Eroare la încărcarea detaliilor spectacolului");
         setLoading(false);
-      });
-  }, [id, userId, isLoggedIn]);
+      }
+    };
+
+    fetchMovieDetails();
+  }, [id]);
 
   const handleRatingChange = async (newValue) => {
     if (!isLoggedIn) {
@@ -83,11 +63,18 @@ const AdminMovieDetails = () => {
 
   const handleBooking = () => {
     if (!isLoggedIn) {
-      alert("Trebuie să fii autentificat pentru a face o rezervare!");
-      navigate("/auth");
+      navigate('/auth');
       return;
     }
-    navigate(`/booking/${id}`);
+    if (userRole === 'admin') {
+      alert('Adminii nu pot face rezervări. Vă rugăm să folosiți un cont de utilizator normal.');
+      return;
+    }
+    if (!movie || !movie._id) {
+      setError("Nu s-au putut încărca detaliile spectacolului");
+      return;
+    }
+    navigate(`/booking/${movie._id}`);
   };
 
   if (loading) {
@@ -95,7 +82,7 @@ const AdminMovieDetails = () => {
   }
 
   if (error) {
-    return <Typography textAlign="center" color="error" variant="h5" mt={5}>{error}</Typography>;
+    return <Alert severity="error">{error}</Alert>;
   }
 
   return (
@@ -124,17 +111,13 @@ const AdminMovieDetails = () => {
                 <Grid container spacing={3}>
                   {/* Imagine și titlu */}
                   <Grid item xs={12} md={4}>
-                    <Box
-                      component="img"
-                      src={movie.posterUrl}
-                      alt={movie.title}
-                      sx={{
-                        width: "100%",
-                        height: "auto",
-                        borderRadius: 2,
-                        boxShadow: 3,
-                      }}
-                    />
+                    <Paper elevation={3} sx={{ p: 2 }}>
+                      <img
+                        src={movie.posterUrl}
+                        alt={movie.title}
+                        style={{ width: "100%", height: "auto" }}
+                      />
+                    </Paper>
                     <Box className="mt-4">
                       <RatingComponent
                         averageRating={movie.averageRating || 0}

@@ -6,9 +6,26 @@ import {
   Typography,
 } from "@mui/material";
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const CradLayout = ({ title, description, releaseDate, posterUrl, id }) => {
+  const navigate = useNavigate();
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  const userRole = useSelector((state) => state.auth.role);
+
+  const handleBooking = () => {
+    if (!isLoggedIn) {
+      navigate('/auth');
+      return;
+    }
+    if (userRole === 'admin') {
+      alert('Adminii nu pot face rezervări. Vă rugăm să folosiți un cont de utilizator normal.');
+      return;
+    }
+    navigate(`/booking/${id}`);
+  };
+
   return (
     <Card
       sx={{
@@ -37,8 +54,7 @@ const CradLayout = ({ title, description, releaseDate, posterUrl, id }) => {
       </CardContent>
       <CardActions>
         <Button
-          LinkComponent={Link}
-          to={`/booking/${id}`}
+          onClick={handleBooking}
           fullWidth
           variant="contained"
           sx={{
@@ -50,7 +66,7 @@ const CradLayout = ({ title, description, releaseDate, posterUrl, id }) => {
             borderRadius: 5,
           }}
         >
-          Book Now
+          Rezervă acum
         </Button>
       </CardActions>
     </Card>

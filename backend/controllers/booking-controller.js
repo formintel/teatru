@@ -2,11 +2,36 @@ import mongoose from "mongoose";
 import Bookings from "../models/Bookings.js";
 import Movie from "../models/Movie.js";
 import User from "../models/User.js";
+import jwt from "jsonwebtoken";
+import Admin from "../models/Admin.js";
 
 export const newBooking = async (req, res, next) => {
   console.log("Request body pentru noua rezervare:", req.body);
   
   const { movie, date, seatNumbers, seatNumber, user, showTimeId } = req.body;
+
+  // Verificăm dacă utilizatorul este admin
+  const extractedToken = req.headers.authorization?.split(" ")[1];
+  if (!extractedToken) {
+    return res.status(401).json({ message: "Token Not Found" });
+  }
+
+  let userId;
+  try {
+    const decrypted = jwt.verify(extractedToken, process.env.JWT_SECRET);
+    userId = decrypted.id;
+    
+    // Verificăm dacă utilizatorul este admin
+    const adminUser = await Admin.findById(userId);
+    if (adminUser) {
+      return res.status(403).json({ 
+        message: "Adminii nu pot face rezervări. Vă rugăm să folosiți un cont de utilizator normal." 
+      });
+    }
+  } catch (err) {
+    console.log("Token verification failed:", err);
+    return res.status(401).json({ message: "Invalid Token" });
+  }
 
   // Validare câmpuri obligatorii
   if (!movie || !date || (!seatNumbers && !seatNumber) || !user || !showTimeId) {

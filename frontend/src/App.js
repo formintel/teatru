@@ -14,6 +14,10 @@ import UserProfile from "./profile/UserProfile";
 import { authActions } from "./store";
 import AdminMovieDetails from "./components/Movies/AdminMovieDetails";
 import PaymentPage from "./components/Booking/PaymentPage";
+import AdminPanel from './components/Admin/AdminPanel';
+import ManageMovies from './components/Admin/ManageMovies';
+import ManageBookings from './components/Admin/ManageBookings';
+import Statistics from './components/Admin/Statistics';
 
 function App() {
   const dispatch = useDispatch();
@@ -50,8 +54,11 @@ function App() {
           )}
           {isLoggedIn && userRole === "admin" && (
             <>
-              <Route path="/add" element={<AddMovie />} />
-              <Route path="/user-admin" element={<AdminProfile />} />
+              <Route path="/admin" element={<AdminPanel />} />
+              <Route path="/admin/add-movie" element={<AddMovie />} />
+              <Route path="/admin/manage-movies" element={<ManageMovies />} />
+              <Route path="/admin/manage-bookings" element={<ManageBookings />} />
+              <Route path="/admin/statistics" element={<Statistics />} />
             </>
           )}
           {/* Rute publice care trebuie să fie accesibile oricând */}
