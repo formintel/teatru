@@ -11,12 +11,6 @@ import {
 
 const movieRouter = express.Router();
 
-// Logging middleware pentru rutele de film
-movieRouter.use((req, res, next) => {
-  console.log(`Movie route accessed: ${req.method} ${req.url}`);
-  next();
-});
-
 movieRouter.get("/", getAllMovies);
 movieRouter.get("/:id", getMovieById);
 movieRouter.post("/", addMovie);

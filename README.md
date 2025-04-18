@@ -245,6 +245,7 @@ Panoul de administrare oferă o interfață modernă și intuitivă pentru gesti
   - Vânzări pe perioade
   - Ocupare săli
   - Rating-uri spectacole
+![Statistici generale](./screenshots/admin/statistici.png)
 
 #### Gestionare Utilizatori
 - Listă completă utilizatori
@@ -264,13 +265,7 @@ Pagina de profil pentru utilizatori obișnuiți oferă o interfață personaliza
 - Optiunea de a vizualiza si de a sterge biletul 
 ![Profil Utilizator](./screenshots/auth/user-profile.png)
 
-#### Profil Administrator
-Panoul de administrare oferă un set complet de instrumente pentru gestionarea platformei:
 
-##### Pagina de spectacole
-- Optiunea de a edita sau a sterge spectacole
-- Nu este disponibila optiunea de rezervare bilet, deoarece nu este o buna practica din punct de vedere al securitatii
-![Editare spectacole](./screenshots/admin/editare-spectacole.png)
 
 
 

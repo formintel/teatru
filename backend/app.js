@@ -40,15 +40,38 @@ app.use(cors({
 // middlewares
 app.use(express.json());
 
-// Logging middleware - nu logăm datele sensibile
+// Logging middleware - logare selectivă
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`);
-  // Logăm doar datele nesensibile
-  const safeBody = { ...req.body };
-  if (safeBody.password) {
-    safeBody.password = "******";
+  // Ignorăm logarea pentru fișiere statice și alte rute frecvente
+  if (req.url.startsWith('/uploads/') || 
+      (req.method === 'GET' && req.url === '/movie') ||
+      req.url === '/favicon.ico') {
+    return next();
   }
-  console.log("Request body:", safeBody);
+
+  // Logăm doar operațiile importante
+  const importantOperations = [
+    'POST /booking',
+    'POST /admin/login',
+    'POST /user/login',
+    'POST /user/signup',
+    'POST /movie',
+    'PUT /movie',
+    'DELETE /movie',
+    'POST /admin/statistics'
+  ];
+
+  const currentOperation = `${req.method} ${req.url}`;
+  if (importantOperations.some(op => currentOperation.startsWith(op))) {
+    console.log(`\n[${new Date().toLocaleString()}] ${currentOperation}`);
+    // Logăm doar datele nesensibile pentru operațiile importante
+    const safeBody = { ...req.body };
+    if (safeBody.password) {
+      safeBody.password = "******";
+    }
+    console.log("Request data:", safeBody);
+  }
+
   next();
 });
 

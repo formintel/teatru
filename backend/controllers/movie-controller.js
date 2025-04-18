@@ -112,18 +112,37 @@ export const addMovie = async (req, res, next) => {
 };
 
 export const getAllMovies = async (req, res, next) => {
-  let movies;
-
   try {
-    movies = await Movie.find();
-  } catch (err) {
-    return console.log(err);
-  }
+    // Obținem toate filmele
+    let movies = await Movie.find();
+    const currentDate = new Date();
 
-  if (!movies) {
-    return res.status(500).json({ message: "Request Failed" });
+    // Filtrăm și procesăm fiecare film
+    const filteredMovies = movies.map(movie => {
+      // Convertim documentul Mongoose într-un obiect simplu pentru a-l putea modifica
+      const movieObj = movie.toObject();
+
+      // Filtrăm reprezentațiile care nu au expirat
+      movieObj.showTimes = movieObj.showTimes.filter(showTime => {
+        const showTimeDate = new Date(showTime.date);
+        // Păstrăm doar reprezentațiile care sunt în viitor sau în ziua curentă
+        return showTimeDate >= currentDate.setHours(0, 0, 0, 0);
+      });
+
+      return movieObj;
+    }).filter(movie => 
+      // Păstrăm doar filmele care au cel puțin o reprezentație viitoare
+      movie.showTimes.length > 0
+    );
+
+    return res.status(200).json({ movies: filteredMovies });
+  } catch (err) {
+    console.error("Eroare la obținerea spectacolelor:", err);
+    return res.status(500).json({ 
+      message: "Eroare la obținerea spectacolelor", 
+      error: err.message 
+    });
   }
-  return res.status(200).json({ movies });
 };
 
 export const getMovieById = async (req, res, next) => {
