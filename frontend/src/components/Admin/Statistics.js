@@ -18,7 +18,7 @@ import {
 } from 'chart.js';
 import { getAdminStatistics } from "../../api-helpers/api-helpers";
 
-// Înregistrăm componentele Chart.js necesare
+
 ChartJS.register(ArcElement, Tooltip, Legend, Title);
 
 const Statistics = () => {
@@ -26,7 +26,7 @@ const Statistics = () => {
   const [error, setError] = useState(null);
   const [statistics, setStatistics] = useState(null);
 
-  // Culorile pentru grafice
+  
   const chartColors = [
     '#FF6384',
     '#36A2EB',

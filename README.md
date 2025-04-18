@@ -48,6 +48,8 @@ cd frontend
 
 # 2. Instalați dependențele
 npm install
+# Dacă întâmpinați erori de dependențe, puteți încerca:
+# npm install --legacy-peer-deps
 
 # 3. Porniți aplicația
 npm start
@@ -62,14 +64,13 @@ npm start
 Baza de date conține următoarele colecții:
 - **admins**: Conturi de administrator
 - **users**: Utilizatori înregistrați
-- **plays**: Spectacole de teatru -> nu mai sunt folosite in proiect 
 - **bookings**: Rezervări
 - **movies**: Spectacole de teatru
 
 ## Roluri:
-•	Guest → poate vedea lista spectacolelor, dar nu poate face rezervări.
-•	User (autentificat) → poate face rezervări.
-•	Admin → gestionează spectacolelor și rezervările
+- **Guest** → poate vedea lista spectacolelor, dar nu poate face rezervări.
+-	**User** (autentificat) → poate face rezervări.
+-	**Admin** → gestionează spectacolelor și rezervările
 
 
 ## Conturi pentru Testare
@@ -94,7 +95,7 @@ Bara de navigare modernă și responsive oferă acces rapid la toate funcțional
 - Design responsiv pentru dispozitive mobile și desktop
 
 #### Componente Principale
-1. **Logo și Branding**
+1. **Logo**
 
 2. **Sistem de Căutare**
    - Căutare instantanee în toate spectacolele
@@ -126,13 +127,12 @@ Pagina principală a aplicației oferă o experiență modernă și atractivă p
 
 #### Hero Section
 ![Hero Section](./screenshots/homepage/hero-section.png)
-- Imagine de fundal cu gradient dinamic
 - Logo-ul teatrului (DramArena)
 - Titlu principal și slogan
 - Butoane de acțiune pentru:
   - Vizualizarea spectacolelor
   - Accesarea panoului de administrare (pentru admini)
-  ![Hero Section for admins](./screenshots/homepage/hero-section-admin.png)
+![Hero Section for admins](./screenshots/homepage/here-section-admin.png)
 
 #### Carousel de Spectacole
 ![Carousel de Spectacole](./screenshots/homepage/carousel.png)
@@ -158,7 +158,6 @@ Pagina principală a aplicației oferă o experiență modernă și atractivă p
 
 #### Harta de Localizare
 ![Harta de Localizare](./screenshots/homepage/map.png)
-- Integrare cu Leaflet pentru afișarea locației teatrului
 - Harta interactivă pentru ghidare
 
 ### 3. Pagina de Spectacole

@@ -138,24 +138,24 @@ const AddMovie = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
-        <div className="flex justify-between items-center mb-8">
+    <div className="min-h-screen bg-gray-100 py-6 sm:py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-4 sm:p-8">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
           <button
             type="button"
             onClick={handleBack}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
             ← Înapoi
           </button>
-          <h2 className="text-3xl font-bold text-center text-gray-800 font-serif">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 font-serif">
             Adaugă Spectacol Nou
           </h2>
-          <div className="w-[88px]"></div> {/* Spacer pentru aliniere */}
+          <div className="w-full sm:w-[88px]"></div> {/* Spacer pentru aliniere */}
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Titlu
@@ -269,137 +269,129 @@ const AddMovie = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Descriere
-            </label>
-            <textarea
-              name="description"
-              value={inputs.description}
-              onChange={handleChange}
-              rows="4"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-              required
-            />
-          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Descriere
+              </label>
+              <textarea
+                name="description"
+                value={inputs.description}
+                onChange={handleChange}
+                rows="4"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                required
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              URL Poster
-            </label>
-            <input
-              type="text"
-              name="posterUrl"
-              value={inputs.posterUrl}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Actori
-            </label>
-            <div className="flex space-x-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                URL Poster
+              </label>
               <input
                 type="text"
-                value={actor}
-                onChange={(e) => setActor(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="Nume actor"
+                name="posterUrl"
+                value={inputs.posterUrl}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                required
               />
-              <button
-                type="button"
-                onClick={() => {
-                  if (actor.trim()) {
-                    setActors([...actors, actor.trim()]);
-                    setActor("");
-                  }
-                }}
-                className="px-4 py-2 bg-red-900 text-white rounded-md hover:bg-red-800 transition-colors duration-300"
-              >
-                Adaugă
-              </button>
             </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {actors.map((actor, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800"
-                >
-                  {actor}
-                  <button
-                    type="button"
-                    onClick={() => setActors(actors.filter((_, i) => i !== index))}
-                    className="ml-2 text-red-600 hover:text-red-800"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date și Ore Disponibile
-            </label>
-            <div className="flex space-x-2">
-              <input
-                type="datetime-local"
-                name="date"
-                value={newShowTime.date}
-                onChange={handleShowTimeChange}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-              />
-              <input
-                type="number"
-                name="availableSeats"
-                value={newShowTime.availableSeats}
-                onChange={handleShowTimeChange}
-                placeholder="Locuri disponibile"
-                className="w-40 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-              />
-              <button
-                type="button"
-                onClick={addShowTime}
-                className="px-4 py-2 bg-red-900 text-white rounded-md hover:bg-red-800 transition-colors duration-300"
-              >
-                Adaugă
-              </button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Actori
+              </label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  value={actor}
+                  onChange={(e) => setActor(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                  placeholder="Nume actor"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (actor.trim()) {
+                      setActors([...actors, actor.trim()]);
+                      setActor("");
+                    }
+                  }}
+                  className="w-full sm:w-auto px-4 py-2 bg-red-900 text-white rounded-md hover:bg-red-800 transition-colors duration-300"
+                >
+                  Adaugă
+                </button>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {actors.map((actor, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800"
+                  >
+                    {actor}
+                    <button
+                      type="button"
+                      onClick={() => setActors(actors.filter((_, i) => i !== index))}
+                      className="ml-2 text-red-600 hover:text-red-800"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
             </div>
-            
-              <div className="mt-4">
-                <h4 className="font-medium mb-2">Reprezentații programate:</h4>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Reprezentații
+              </label>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <input
+                    type="datetime-local"
+                    name="date"
+                    value={newShowTime.date}
+                    onChange={handleShowTimeChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                  <input
+                    type="number"
+                    name="availableSeats"
+                    value={newShowTime.availableSeats}
+                    onChange={handleShowTimeChange}
+                    placeholder="Număr locuri"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={addShowTime}
+                  className="w-full sm:w-auto px-4 py-2 bg-red-900 text-white rounded-md hover:bg-red-800 transition-colors duration-300"
+                >
+                  Adaugă Reprezentație
+                </button>
                 <div className="space-y-2">
-                  {showTimes.map((time, index) => (
-                    <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                      <div>
-                        <span className="font-medium">
-                          {new Date(time.date).toLocaleString('ro-RO', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
-                        <span className="ml-4 text-gray-600">
-                          {time.availableSeats} locuri disponibile
-                        </span>
-                      </div>
+                  {showTimes.map((showTime, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
+                    >
+                      <span className="text-sm">
+                        {new Date(showTime.date).toLocaleString()} - {showTime.availableSeats} locuri
+                      </span>
                       <button
                         type="button"
                         onClick={() => removeShowTime(index)}
                         className="text-red-600 hover:text-red-800"
                       >
-                        ×
+                        Șterge
                       </button>
                     </div>
                   ))}
                 </div>
               </div>
+            </div>
           </div>
 
           <div className="flex items-center">

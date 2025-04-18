@@ -15,7 +15,12 @@ import {
   Alert,
   Button,
   IconButton,
-  Tooltip
+  Tooltip,
+  useMediaQuery,
+  useTheme,
+  Card,
+  CardContent,
+  Grid
 } from "@mui/material";
 import { getAllBookings } from "../../api-helpers/api-helpers";
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -24,6 +29,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const ManageBookings = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -45,23 +52,104 @@ const ManageBookings = () => {
     fetchBookings();
   }, []);
 
+  const renderMobileBooking = (booking) => (
+    <Card key={booking._id} sx={{ mb: 2 }}>
+      <CardContent>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" color="textSecondary">
+              ID Rezervare
+            </Typography>
+            <Typography variant="body2">{booking._id}</Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" color="textSecondary">
+              Utilizator
+            </Typography>
+            <Typography variant="body2">
+              {booking.user?.name || booking.user?.email || "N/A"}
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" color="textSecondary">
+              Spectacol
+            </Typography>
+            <Typography variant="body2">{booking.movie?.title || "N/A"}</Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" color="textSecondary">
+              Data
+            </Typography>
+            <Typography variant="body2">
+              {booking.date ? new Date(booking.date).toLocaleString("ro-RO", {
+                dateStyle: 'medium',
+                timeStyle: 'short'
+              }) : "N/A"}
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="subtitle2" color="textSecondary">
+              Loc
+            </Typography>
+            <Typography variant="body2">{booking.seatNumber}</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="subtitle2" color="textSecondary">
+              Status
+            </Typography>
+            <Box
+              sx={{
+                backgroundColor: 'success.light',
+                color: 'success.contrastText',
+                py: 0.5,
+                px: 1,
+                borderRadius: 1,
+                display: 'inline-block'
+              }}
+            >
+              Confirmată
+            </Box>
+          </Grid>
+        </Grid>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 2, mb: 4, px: { xs: 2, sm: 3 } }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        mb: 3,
+        gap: 2
+      }}>
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate('/admin')}
           variant="outlined"
-          sx={{ mr: 2 }}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
           Înapoi la Panou
         </Button>
-        <Typography variant="h4" component="h1" sx={{ flex: 1, textAlign: 'center' }}>
+        <Typography 
+          variant="h4" 
+          component="h1" 
+          sx={{ 
+            textAlign: 'center',
+            fontSize: { xs: '1.5rem', sm: '2rem' }
+          }}
+        >
           Gestionare Rezervări
         </Typography>
         <Tooltip title="Reîmprospătează">
           <span>
-            <IconButton onClick={fetchBookings} disabled={loading}>
+            <IconButton 
+              onClick={fetchBookings} 
+              disabled={loading}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
               <RefreshIcon />
             </IconButton>
           </span>
@@ -83,6 +171,10 @@ const ManageBookings = () => {
               <Typography color="textSecondary">
                 Nu există rezervări momentan.
               </Typography>
+            </Box>
+          ) : isMobile ? (
+            <Box sx={{ p: 2 }}>
+              {bookings.map(renderMobileBooking)}
             </Box>
           ) : (
             <TableContainer sx={{ maxHeight: 440 }}>
